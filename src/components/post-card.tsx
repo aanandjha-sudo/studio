@@ -25,13 +25,14 @@ const reactions = ["❤️", "😂", "🤯", "😢", "😡"];
 interface PostCardProps {
   post: Post;
   onPostUpdate: (post: Post) => void;
+  isSinglePostView?: boolean;
 }
 
-const PostCard = React.memo(function PostCard({ post, onPostUpdate }: PostCardProps) {
+const PostCard = React.memo(function PostCard({ post, onPostUpdate, isSinglePostView = false }: PostCardProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
-  const [isCommentVisible, setIsCommentVisible] = useState(false);
+  const [isCommentVisible, setIsCommentVisible] = useState(isSinglePostView);
   const [commentText, setCommentText] = useState("");
   const [isLiked, setIsLiked] = useState(false);
 

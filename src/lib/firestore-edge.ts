@@ -86,6 +86,15 @@ export const getPosts = async (): Promise<Post[]> => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
 };
 
+export const getPostById = async (postId: string): Promise<Post | null> => {
+    const postRef = doc(db, "posts", postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+        return { id: postSnap.id, ...postSnap.data() } as Post;
+    }
+    return null;
+}
+
 export const updatePost = async (postId: string, updatedData: Partial<Post>) => {
     const postRef = doc(db, "posts", postId);
     await updateDoc(postRef, updatedData);
