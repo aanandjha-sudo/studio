@@ -1,76 +1,89 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AppLayout from "@/components/app-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Search, MoreVertical } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
+import { useAuth } from "@/components/auth-provider";
+import { getConversations, getMessages, addMessage } from "@/lib/firestore";
+import { serverTimestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
-const initialConversations: Conversation[] = [
-  {
-    id: "1",
-    participant: {
-      name: "PixelQueen",
-      avatarUrl: "https://placehold.co/100x100.png",
-    },
-    lastMessage: "Hey, love your latest post!",
-    timestamp: "10:42 AM",
-    unread: 2,
-  },
-  {
-    id: "2",
-    participant: {
-      name: "Alex_Travels",
-      avatarUrl: "https://placehold.co/100x100.png",
-    },
-    lastMessage: "The Santorini pictures are breathtaking!",
-    timestamp: "9:30 AM",
-    unread: 0,
-  },
-  {
-    id: "3",
-    participant: {
-      name: "SynthWaveMaster",
-      avatarUrl: "https://placehold.co/100x100.png",
-    },
-    lastMessage: "No problem, glad you liked the track.",
-    timestamp: "Yesterday",
-    unread: 0,
-  },
-];
-
-const initialMessages: Message[] = [
-    { id: '1', sender: 'PixelQueen', text: 'Hey, love your latest post!', timestamp: '10:40 AM', isOwn: false },
-    { id: '2', sender: 'You', text: 'Thanks so much! I really appreciate it.', timestamp: '10:41 AM', isOwn: true },
-    { id: '3', sender: 'PixelQueen', text: "Of course! Your art is amazing.", timestamp: '10:42 AM', isOwn: false },
+// Placeholder for users you can message
+const availableUsers = [
+  { id: "user2", name: "PixelQueen", avatarUrl: "https://placehold.co/100x100.png" },
+  { id: "user3", name: "Alex_Travels", avatarUrl: "https://placehold.co/100x100.png" },
+  { id: "user4", name: "SynthWaveMaster", avatarUrl: "https://placehold.co/100x100.png" },
 ];
 
 
 export default function MessagesPage() {
-  const [conversations, setConversations] = useState(initialConversations);
-  const [selectedConversation, setSelectedConversation] = useState(conversations[0]);
-  const [messages, setMessages] = useState(initialMessages);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
-  const handleSendMessage = (e: React.FormEvent) => {
+   useEffect(() => {
+    if (!user) return;
+    const unsubscribe = getConversations(
+      user.uid,
+      (convos) => {
+        setConversations(convos);
+        if (!selectedConversation && convos.length > 0) {
+            setSelectedConversation(convos[0]);
+        }
+      },
+      (error) => {
+        console.error("Error fetching conversations:", error);
+        toast({ variant: "destructive", title: "Could not load chats" });
+      }
+    );
+    return () => unsubscribe();
+  }, [user, selectedConversation, toast]);
+
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const unsubscribe = getMessages(
+      selectedConversation.id,
+      setMessages,
+      (error) => {
+        console.error("Error fetching messages:", error);
+        toast({ variant: "destructive", title: "Could not load messages" });
+      }
+    );
+    return () => unsubscribe();
+  }, [selectedConversation, toast]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) {
-        const msg: Message = {
-            id: String(messages.length + 1),
-            sender: 'You',
-            text: newMessage,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isOwn: true
-        };
-        setMessages([...messages, msg]);
+    if (!newMessage.trim() || !user || !selectedConversation) return;
+
+    const receiverId = selectedConversation.participants.find(p => p.id !== user.uid)?.id;
+    if (!receiverId) return;
+
+    try {
+        await addMessage(selectedConversation.id, user.uid, receiverId, newMessage);
         setNewMessage("");
+    } catch (error) {
+        console.error("Error sending message:", error);
+        toast({ variant: "destructive", title: "Failed to send message" });
     }
   };
+
+   const handleSelectConversation = (convo: Conversation) => {
+    setSelectedConversation(convo);
+  };
+  
+  const getParticipant = (convo: Conversation) => {
+      return convo.participants.find(p => p.id !== user?.uid);
+  }
 
   return (
     <AppLayout>
@@ -85,40 +98,43 @@ export default function MessagesPage() {
                 </div>
            </div>
            <ScrollArea className="flex-1">
-                {conversations.map(convo => (
-                    <div 
-                        key={convo.id} 
-                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted ${selectedConversation.id === convo.id ? 'bg-muted' : ''}`}
-                        onClick={() => setSelectedConversation(convo)}
-                    >
-                        <Avatar>
-                            <AvatarImage src={convo.participant.avatarUrl} />
-                            <AvatarFallback>{convo.participant.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 overflow-hidden">
-                            <p className="font-semibold truncate">{convo.participant.name}</p>
-                            <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
+                {conversations.map(convo => {
+                    const participant = getParticipant(convo);
+                    if (!participant) return null;
+                    return (
+                        <div 
+                            key={convo.id} 
+                            className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted ${selectedConversation?.id === convo.id ? 'bg-muted' : ''}`}
+                            onClick={() => handleSelectConversation(convo)}
+                        >
+                            <Avatar>
+                                <AvatarImage src={participant.avatarUrl} />
+                                <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 overflow-hidden">
+                                <p className="font-semibold truncate">{participant.name}</p>
+                                <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
+                            </div>
+                            <div className="text-xs text-muted-foreground text-right">
+                                <p>{convo.timestamp ? new Date(convo.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                            </div>
                         </div>
-                        <div className="text-xs text-muted-foreground text-right">
-                            <p>{convo.timestamp}</p>
-                            {convo.unread > 0 && <span className="mt-1 inline-block bg-accent text-accent-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{convo.unread}</span>}
-                        </div>
-                    </div>
-                ))}
+                    )
+                })}
            </ScrollArea>
         </div>
 
         {/* Chat Window */}
         <div className="md:col-span-2 xl:col-span-3 flex flex-col h-full">
-            {selectedConversation ? (
+            {selectedConversation && user ? (
                 <>
                     <div className="flex items-center justify-between p-4 border-b">
                         <div className="flex items-center gap-3">
                             <Avatar>
-                                <AvatarImage src={selectedConversation.participant.avatarUrl} />
-                                <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={getParticipant(selectedConversation)?.avatarUrl} />
+                                <AvatarFallback>{getParticipant(selectedConversation)?.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <h2 className="text-lg font-semibold">{selectedConversation.participant.name}</h2>
+                            <h2 className="text-lg font-semibold">{getParticipant(selectedConversation)?.name}</h2>
                         </div>
                         <Button variant="ghost" size="icon">
                             <MoreVertical className="h-5 w-5" />
@@ -127,10 +143,10 @@ export default function MessagesPage() {
                     <ScrollArea className="flex-1 p-4">
                         <div className="space-y-4">
                             {messages.map(msg => (
-                                <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${msg.isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                <div key={msg.id} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${msg.senderId === user.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                         <p>{msg.text}</p>
-                                        <p className="text-xs text-right mt-1 opacity-70">{msg.timestamp}</p>
+                                        <p className="text-xs text-right mt-1 opacity-70">{msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}</p>
                                     </div>
                                 </div>
                             ))}

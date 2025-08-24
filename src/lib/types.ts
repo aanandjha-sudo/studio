@@ -21,22 +21,25 @@ export interface Post {
 
 export interface Message {
     id: string;
-    sender: string;
+    senderId: string;
     text: string;
-    timestamp: string;
-    isOwn: boolean;
+    timestamp: Timestamp;
+}
+
+export interface UserProfile {
+    id: string;
+    name: string;
+    avatarUrl: string;
 }
 
 export interface Conversation {
     id: string;
-    participant: {
-        name: string;
-        avatarUrl: string;
-    };
+    participantIds: string[];
+    participants: UserProfile[];
     lastMessage: string;
-    timestamp: string;
-    unread: number;
+    timestamp: Timestamp;
 }
+
 
 export interface SuperChat {
     user: string;
