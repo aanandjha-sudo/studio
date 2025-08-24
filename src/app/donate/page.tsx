@@ -3,12 +3,16 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import AppLayout from "@/components/app-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Heart, Coffee } from "lucide-react";
 
 export default function DonatePage() {
   const qrCodeUrl = "https://drive.google.com/uc?export=download&id=11GNGZPiUbQIgJwkY4qMWGw8U6YdZMA2N";
+  const buyMeACoffeeUrl = "https://buymeacoffee.com/aanandjha";
 
   return (
     <AppLayout>
@@ -25,10 +29,10 @@ export default function DonatePage() {
               </div>
               <CardTitle className="mt-4">Support Our Platform</CardTitle>
               <CardDescription>
-                Your contributions help us keep the community running. Scan the QR code below to donate.
+                Your contributions help us keep the community running. Choose your preferred way to donate below.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center">
+            <CardContent className="flex flex-col items-center gap-6">
               <div className="p-2 border rounded-lg bg-white">
                 <Image 
                   src={qrCodeUrl} 
@@ -38,6 +42,19 @@ export default function DonatePage() {
                   className="rounded-md"
                 />
               </div>
+              
+              <div className="flex items-center w-full">
+                <Separator className="flex-1" />
+                <span className="px-4 text-xs text-muted-foreground">OR</span>
+                <Separator className="flex-1" />
+              </div>
+
+              <Button asChild className="w-full bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90">
+                <Link href={buyMeACoffeeUrl} target="_blank" rel="noopener noreferrer">
+                  <Coffee className="mr-2 h-5 w-5" />
+                  Buy Me a Coffee
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
