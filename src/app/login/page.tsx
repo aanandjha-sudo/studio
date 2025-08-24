@@ -36,7 +36,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Logged In!",
-        description: "Welcome back to Vivid Stream.",
+        description: "Welcome back to BRO'S SHARE.",
       });
       router.push("/");
     } catch (error: any) {

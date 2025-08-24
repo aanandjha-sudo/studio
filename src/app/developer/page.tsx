@@ -126,7 +126,7 @@ export default function DeveloperPage() {
               </CardHeader>
               <CardContent className="flex gap-2">
                 <Input 
-                  placeholder="Post URL (e.g., https://vividstream.com/post/...)"
+                  placeholder="Post URL (e.g., https://brosshare.com/post/...)"
                   value={postUrlToDelete}
                   onChange={(e) => setPostUrlToDelete(e.target.value)}
                 />

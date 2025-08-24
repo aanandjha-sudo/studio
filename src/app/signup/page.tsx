@@ -41,7 +41,7 @@ export default function SignupPage() {
 
       toast({
         title: "Account Created!",
-        description: "Welcome to Vivid Stream. Please log in.",
+        description: "Welcome to BRO'S SHARE. Please log in.",
       });
       router.push("/login");
     } catch (error: any) {
@@ -71,7 +71,7 @@ export default function SignupPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join Vivid Stream today!</CardDescription>
+          <CardDescription>Join BRO'S SHARE today!</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

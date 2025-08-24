@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/auth-provider";
 
 export const metadata: Metadata = {
-  title: "Vivid Stream",
+  title: "BRO'S SHARE",
   description: "A dynamic social media platform for sharing and engaging with content.",
 };
 
