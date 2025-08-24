@@ -46,7 +46,8 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
 };
 
 export const updateUserProfile = (uid: string, data: Partial<UserProfile>) => {
-    return updateDoc(doc(db, "users", uid), data);
+    const userDocRef = doc(db, "users", uid);
+    return updateDoc(userDocRef, data);
 };
 
 
