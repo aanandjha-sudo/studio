@@ -44,19 +44,15 @@ export default function SignupPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Firebase Auth requires a valid email format, so we create one from the username.
-      // This email is only for authentication and won't be shown to users.
-      const email = `${values.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brosshare-user.com`;
+      const email = `${values.username.toLowerCase()}@brosshare-user.com`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
       
       const newUser = userCredential.user;
 
-      // Update Firebase Auth profile displayName to the chosen username
       await updateProfile(newUser, {
         displayName: values.username,
       });
 
-      // Create user profile in Firestore
       await createUserProfile(newUser.uid, {
           username: values.username,
           displayName: values.username,
@@ -80,7 +76,7 @@ export default function SignupPage() {
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = "This username is already taken. Please choose another.";
       } else if (error.code) {
-          errorMessage = `An error occurred: ${error.code.replace('auth/', '')}`;
+          errorMessage = `Signup failed: ${error.code.replace('auth/', '')}`;
       }
       toast({
         variant: "destructive",

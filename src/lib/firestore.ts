@@ -33,7 +33,17 @@ const usersCollection = collection(db, "users");
 
 // User Profile
 export const createUserProfile = (uid: string, profileData: Omit<UserProfile, 'id'>) => {
-  return setDoc(doc(db, "users", uid), profileData);
+  const userProfile: UserProfile = {
+    id: uid,
+    ...profileData,
+    followers: [],
+    following: [],
+     privacySettings: {
+        hideFollowers: false,
+        hideFollowing: false,
+    }
+  };
+  return setDoc(doc(db, "users", uid), userProfile);
 };
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
