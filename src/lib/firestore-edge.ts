@@ -19,7 +19,7 @@ import {
     deleteDoc,
     writeBatch
 } from 'firebase/firestore';
-import type { Post, UserProfile, Conversation, Message, LiveStream } from './types';
+import type { Post, UserProfile, Conversation, Message, LiveStream, Comment } from './types';
 
 // --- USER PROFILE FUNCTIONS ---
 export const createUserProfile = async (uid: string, profileData: Omit<UserProfile, 'id' | 'followers' | 'following'>): Promise<void> => {
@@ -70,6 +70,7 @@ export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' |
     const newPostData = {
         ...postData,
         likes: 0,
+        likedBy: [],
         comments: 0,
         shares: 0,
         commentsData: [],

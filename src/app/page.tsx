@@ -74,12 +74,12 @@ export default function FeedPage() {
     };
     
     try {
-        const newPost = await addPost(newPostData);
-        setPosts(prevPosts => [newPost, ...prevPosts]);
+        await addPost(newPostData);
         toast({
             title: "Post Created!",
             description: "Your post is now live on the feed.",
         });
+        fetchPosts(); // Refetch posts to show the new one
     } catch (error) {
         console.error("Error creating post:", error);
         toast({
@@ -90,9 +90,9 @@ export default function FeedPage() {
     }
   };
 
-  const handlePostUpdate = (updatedPost: Post) => {
+  const handlePostUpdate = async (updatedPost: Post) => {
     setPosts(prevPosts => prevPosts.map(p => p.id === updatedPost.id ? updatedPost : p));
-    updatePost(updatedPost.id, updatedPost);
+    await updatePost(updatedPost.id, updatedPost);
   };
 
 

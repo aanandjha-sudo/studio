@@ -8,6 +8,7 @@ export interface Comment {
       avatarUrl: string;
       handle: string;
     };
+    userId: string;
     content: string;
     timestamp: number;
 }
@@ -24,6 +25,7 @@ export interface Post {
     mediaUrl?: string;
     mediaAiHint?: string;
     likes: number;
+    likedBy?: string[];
     comments: number;
     shares: number;
     commentsData?: Comment[];

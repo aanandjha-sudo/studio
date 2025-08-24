@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./auth-provider";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "./ui/input";
 
 const reactions = ["❤️", "😂", "🤯", "😢", "😡"];
@@ -36,6 +36,14 @@ const PostCard = React.memo(function PostCard({ post, onPostUpdate, isSinglePost
   const [commentText, setCommentText] = useState("");
   const [isLiked, setIsLiked] = useState(false);
 
+  useEffect(() => {
+    if (user && post.likedBy?.includes(user.uid)) {
+      setIsLiked(true);
+    } else {
+      setIsLiked(false);
+    }
+  }, [user, post.likedBy]);
+
   const handleAuthAction = (callback: () => void) => {
     if (!user) {
         toast({
@@ -50,9 +58,19 @@ const PostCard = React.memo(function PostCard({ post, onPostUpdate, isSinglePost
   };
 
   const handleLike = () => handleAuthAction(() => {
-    const updatedLikes = isLiked ? post.likes - 1 : post.likes + 1;
+    let updatedLikes: number;
+    let updatedLikedBy: string[];
+
+    if (isLiked) {
+      updatedLikes = (post.likes || 0) - 1;
+      updatedLikedBy = post.likedBy?.filter(uid => uid !== user!.uid) || [];
+    } else {
+      updatedLikes = (post.likes || 0) + 1;
+      updatedLikedBy = [...(post.likedBy || []), user!.uid];
+    }
+    
     setIsLiked(!isLiked);
-    onPostUpdate({ ...post, likes: updatedLikes });
+    onPostUpdate({ ...post, likes: updatedLikes, likedBy: updatedLikedBy });
   });
 
   const handleShare = () => {
@@ -75,6 +93,7 @@ const PostCard = React.memo(function PostCard({ post, onPostUpdate, isSinglePost
           avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
           handle: user.displayName.toLowerCase().replace(/\s/g, '_'),
         },
+        userId: user.uid,
         content: commentText,
         timestamp: Date.now(),
       };
@@ -135,9 +154,9 @@ const PostCard = React.memo(function PostCard({ post, onPostUpdate, isSinglePost
       <CardFooter className="p-4 flex flex-col items-start">
          <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <span>{post.likes} Likes</span>
+                <span>{post.likes || 0} Likes</span>
                 <span className="mx-1">·</span>
-                <span>{post.comments} Comments</span>
+                <span>{post.comments || 0} Comments</span>
             </div>
             <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className={`rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-500/10 ${isLiked ? 'text-red-500' : ''}`} onClick={handleLike}>
