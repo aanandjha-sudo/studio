@@ -1,5 +1,7 @@
 
 
+import type { Timestamp } from 'firebase/firestore';
+
 export interface Post {
     id: string;
     author: {
@@ -15,14 +17,14 @@ export interface Post {
     likes: number;
     comments: number;
     shares: number;
-    timestamp: number; // Using number for mock data simplicity
+    timestamp: Timestamp | number; 
   }
 
 export interface Message {
     id: string;
     senderId: string;
     text: string;
-    timestamp: number; // Using number for mock data simplicity
+    timestamp: Timestamp | number;
 }
 
 export interface UserProfile {
@@ -45,7 +47,7 @@ export interface Conversation {
     participantIds: string[];
     participants: Pick<UserProfile, 'id' | 'displayName' | 'photoURL'>[];
     lastMessage: string;
-    timestamp: number; // Using number for mock data simplicity
+    timestamp: Timestamp | number;
 }
 
 
@@ -54,13 +56,4 @@ export interface SuperChat {
     message: string;
     amount: number;
     color: string;
-}
-
-// Stored user credentials for mock auth
-export interface StoredUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  password?: string;
 }

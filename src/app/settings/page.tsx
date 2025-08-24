@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getUserProfile, updateUserProfile } from "@/lib/firestore";
+import { getUserProfile, updateUserProfile } from "@/lib/firestore-edge";
 import type { UserProfile } from "@/lib/types";
 import { Home } from "lucide-react";
 

@@ -6,7 +6,7 @@ import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost, getUserProfile } from "@/lib/firestore";
+import { getPosts, addPost, getUserProfile } from "@/lib/firestore-edge";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -51,8 +51,8 @@ export default function FeedPage() {
         return;
     }
     
-    const userProfile = await getUserProfile(user.uid);
-    if (!userProfile) {
+    // In a real app, you'd get the user's profile. Here we use auth display name.
+    if (!user.displayName) {
         toast({
             variant: "destructive",
             title: "Profile not found",
@@ -63,9 +63,9 @@ export default function FeedPage() {
 
     const newPostData = {
         author: {
-            name: userProfile.displayName || "Anonymous",
-            avatarUrl: userProfile.photoURL || "https://placehold.co/100x100.png",
-            handle: userProfile.username || "user",
+            name: user.displayName || "Anonymous",
+            avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
+            handle: user.displayName.toLowerCase() || "user",
         },
         userId: user.uid,
         content: content,
@@ -73,12 +73,21 @@ export default function FeedPage() {
         ...(type !== 'text' && { mediaUrl }),
     };
     
-    const newPost = await addPost(newPostData);
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-    toast({
-        title: "Post Created!",
-        description: "Your post is now live on the feed.",
-    });
+    try {
+        const newPost = await addPost(newPostData);
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        toast({
+            title: "Post Created!",
+            description: "Your post is now live on the feed.",
+        });
+    } catch (error) {
+        console.error("Error creating post:", error);
+        toast({
+            variant: "destructive",
+            title: "Error Creating Post",
+            description: "There was an issue creating your post. Please try again."
+        });
+    }
   };
 
   const PostSkeleton = () => (

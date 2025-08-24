@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Search, MoreVertical, MessageSquare } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
-import { getConversations, getMessages, addMessage } from "@/lib/firestore";
+import { getConversations, getMessages, addMessage } from "@/lib/firestore-edge";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MessagesPage() {
@@ -24,27 +24,33 @@ export default function MessagesPage() {
 
    useEffect(() => {
     if (!user) return;
-    const convos = getConversations(user.uid);
-    setConversations(convos);
-    if (!selectedConversation && convos.length > 0) {
-        setSelectedConversation(convos[0]);
+    const fetchConversations = async () => {
+        const convos = await getConversations(user.uid);
+        setConversations(convos);
+        if (!selectedConversation && convos.length > 0) {
+            setSelectedConversation(convos[0]);
+        }
     }
+    fetchConversations();
   }, [user, selectedConversation]);
 
   useEffect(() => {
     if (!selectedConversation) return;
-    const initialMessages = getMessages(selectedConversation.id);
-    setMessages(initialMessages);
+    const fetchMessages = async () => {
+        const initialMessages = await getMessages(selectedConversation.id);
+        setMessages(initialMessages);
+    }
+    fetchMessages();
   }, [selectedConversation]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !user || !selectedConversation) return;
 
     const receiverId = selectedConversation.participants.find(p => p.id !== user.uid)?.id;
     if (!receiverId) return;
 
-    const sentMessage = addMessage(selectedConversation.id, user.uid, receiverId, newMessage);
+    const sentMessage = await addMessage(selectedConversation.id, user.uid, receiverId, newMessage);
     setMessages([...messages, sentMessage]);
     setNewMessage("");
   };

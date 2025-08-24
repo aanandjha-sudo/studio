@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Grid3x3, Clapperboard, Bookmark, UserX, UserCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { followUser, unfollowUser, getUserProfile } from "@/lib/firestore";
+import { followUser, unfollowUser, getUserProfile } from "@/lib/firestore-edge";
 import React, { useEffect, useState, useCallback } from "react";
 import type { UserProfile } from "@/lib/types";
 
