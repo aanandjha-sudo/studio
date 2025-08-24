@@ -1,31 +1,49 @@
 
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import AppLayout from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Camera, User, Clapperboard } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import LiveStreamPlayer from "@/components/live-stream-player";
-
-const activeStreams = [
-    { id: 1, user: 'PixelFan', title: 'Creating a new masterpiece', viewers: 1200, thumbnail: 'https://placehold.co/600x400.png', hint: 'digital art' },
-    { id: 2, user: 'SynthLover', title: 'Live DJ Set - Retro Vibes', viewers: 850, thumbnail: 'https://placehold.co/600x400.png', hint: 'music dj set' },
-    { id: 3, user: 'ArtAdmirer', title: 'Watercolor painting session', viewers: 450, thumbnail: 'https://placehold.co/600x400.png', hint: 'painting canvas' },
-    { id: 4, user: 'GameStrider', title: 'Speedrunning a classic game', viewers: 2300, thumbnail: 'https://placehold.co/600x400.png', hint: 'gaming controller' },
-];
+import { getActiveLiveStreams } from "@/lib/firestore-edge";
+import type { LiveStream } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LivePage() {
+    const [activeStreams, setActiveStreams] = useState<LiveStream[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStreams = async () => {
+            setLoading(true);
+            const streams = await getActiveLiveStreams();
+            setActiveStreams(streams);
+            setLoading(false);
+        };
+        fetchStreams();
+
+        const interval = setInterval(fetchStreams, 10000); // Refresh every 10 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    const StreamSkeleton = () => (
+        <Card className="overflow-hidden">
+            <Skeleton className="w-full aspect-video" />
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+        </Card>
+    );
 
     return (
         <AppLayout>
@@ -43,12 +61,14 @@ export default function LivePage() {
                 </header>
                 <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {activeStreams.length > 0 ? activeStreams.map(stream => (
+                        {loading ? (
+                            Array.from({ length: 4 }).map((_, i) => <StreamSkeleton key={i} />)
+                        ) : activeStreams.length > 0 ? activeStreams.map(stream => (
                            <Dialog key={stream.id}>
                                <DialogTrigger asChild>
                                     <Card className="overflow-hidden cursor-pointer group">
                                         <div className="relative aspect-video">
-                                            <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" data-ai-hint={stream.hint} />
+                                            <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" />
                                             <div className="absolute top-2 left-2 bg-red-500/80 text-white px-2 py-0.5 rounded-md text-xs font-bold">LIVE</div>
                                             <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-0.5 rounded-md text-xs flex items-center gap-1">
                                                 <User className="h-3 w-3" />
@@ -57,7 +77,7 @@ export default function LivePage() {
                                         </div>
                                         <CardHeader>
                                             <CardTitle className="truncate">{stream.title}</CardTitle>
-                                            <CardDescription>by {stream.user}</CardDescription>
+                                            <CardDescription>by {stream.userDisplayName}</CardDescription>
                                         </CardHeader>
                                     </Card>
                                </DialogTrigger>

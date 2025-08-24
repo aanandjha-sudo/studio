@@ -5,11 +5,15 @@ import React, { useState, useRef, useEffect } from "react";
 import AppLayout from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Video, Mic, MicOff, ScreenShare, Camera, Power, User, ShieldCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Video, Mic, MicOff, ScreenShare, Camera, Power, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
+import { createLiveStream, deleteLiveStream } from "@/lib/firestore-edge";
+import type { LiveStream } from "@/lib/types";
 
 export default function GoLivePage() {
     const { user, loading } = useAuth();
@@ -20,6 +24,8 @@ export default function GoLivePage() {
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [streamType, setStreamType] = useState<'camera' | 'screen'>('camera');
     const [hasPermission, setHasPermission] = useState(true);
+    const [streamTitle, setStreamTitle] = useState("");
+    const [liveStreamId, setLiveStreamId] = useState<string | null>(null);
 
     const getMedia = async (type: 'camera' | 'screen') => {
         if (stream) {
@@ -55,21 +61,52 @@ export default function GoLivePage() {
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
+            if (liveStreamId) {
+                deleteLiveStream(liveStreamId);
+            }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const toggleStream = () => {
+    const toggleStream = async () => {
         if (isStreaming) {
+            // Ending the stream
+            if (liveStreamId) {
+                await deleteLiveStream(liveStreamId);
+                setLiveStreamId(null);
+            }
             stream?.getTracks().forEach(track => track.stop());
             setStream(null);
             setIsStreaming(false);
             if(videoRef.current) videoRef.current.srcObject = null;
-             toast({ title: "Stream Ended", description: "You are no longer live." });
+            toast({ title: "Stream Ended", description: "You are no longer live." });
         } else {
-            getMedia(streamType);
-            setIsStreaming(true);
-            toast({ title: "You are now live!", description: "Your stream has started successfully." });
+            // Starting the stream
+            if (!user) return;
+            if (!streamTitle.trim()) {
+                toast({ variant: "destructive", title: "Stream title is required." });
+                return;
+            }
+            
+            await getMedia(streamType);
+
+            const streamData = {
+                userId: user.uid,
+                userDisplayName: user.displayName || 'Anonymous',
+                userAvatarUrl: user.photoURL || 'https://placehold.co/100x100.png',
+                title: streamTitle,
+                thumbnail: 'https://placehold.co/600x400.png',
+            };
+            
+            try {
+                const newStream = await createLiveStream(streamData);
+                setLiveStreamId(newStream.id);
+                setIsStreaming(true);
+                toast({ title: "You are now live!", description: "Your stream has started successfully." });
+            } catch (error) {
+                console.error("Failed to start stream:", error);
+                toast({ variant: "destructive", title: "Failed to Start Stream", description: "Could not create the live stream record. Please try again." });
+            }
         }
     };
 
@@ -141,6 +178,16 @@ export default function GoLivePage() {
                                             </Alert>
                                         </div>
                                     )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="stream-title">Stream Title</Label>
+                                    <Input 
+                                        id="stream-title"
+                                        placeholder="What are you streaming about?"
+                                        value={streamTitle}
+                                        onChange={(e) => setStreamTitle(e.target.value)}
+                                        disabled={isStreaming}
+                                    />
                                 </div>
                                 <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
                                     <Button onClick={toggleStream} className="bg-accent hover:bg-accent/90 text-accent-foreground" size="lg">

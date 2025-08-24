@@ -57,3 +57,14 @@ export interface SuperChat {
     amount: number;
     color: string;
 }
+
+export interface LiveStream {
+    id: string;
+    userId: string;
+    userDisplayName: string;
+    userAvatarUrl: string;
+    title: string;
+    viewers: number;
+    thumbnail: string;
+    timestamp: Timestamp | number;
+}

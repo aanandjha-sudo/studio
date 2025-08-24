@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Heart, Gift, Zap } from "lucide-react";
 import SuperChat from "@/components/super-chat";
-import type { SuperChat as SuperChatType } from "@/lib/types";
+import type { SuperChat as SuperChatType, LiveStream } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
@@ -27,13 +27,7 @@ const initialMessages: ChatMessage[] = [
 ];
 
 interface LiveStreamPlayerProps {
-    stream: {
-        id: number;
-        user: string;
-        title: string;
-        viewers: number;
-        thumbnail: string;
-    }
+    stream: LiveStream;
 }
 
 export default function LiveStreamPlayer({ stream }: LiveStreamPlayerProps) {
@@ -86,12 +80,12 @@ export default function LiveStreamPlayer({ stream }: LiveStreamPlayerProps) {
                 <div className="p-4 border-t">
                     <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12 border-2 border-red-500">
-                            <AvatarImage src="https://placehold.co/100x100.png" />
-                            <AvatarFallback>{stream.user.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={stream.userAvatarUrl} />
+                            <AvatarFallback>{stream.userDisplayName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="font-bold text-lg">{stream.title}</p>
-                            <p className="text-sm text-muted-foreground">Streamed by {stream.user}</p>
+                            <p className="text-sm text-muted-foreground">Streamed by {stream.userDisplayName}</p>
                         </div>
                     </div>
                 </div>
@@ -161,4 +155,3 @@ export default function LiveStreamPlayer({ stream }: LiveStreamPlayerProps) {
         </div>
     );
 }
-

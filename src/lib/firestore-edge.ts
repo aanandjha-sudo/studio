@@ -15,9 +15,10 @@ import {
     where,
     Timestamp,
     arrayUnion, 
-    arrayRemove 
+    arrayRemove,
+    deleteDoc
 } from 'firebase/firestore';
-import type { Post, UserProfile, Conversation, Message } from './types';
+import type { Post, UserProfile, Conversation, Message, LiveStream } from './types';
 
 // --- USER PROFILE FUNCTIONS ---
 export const createUserProfile = async (uid: string, profileData: Omit<UserProfile, 'id' | 'followers' | 'following'>): Promise<void> => {
@@ -138,4 +139,30 @@ export const addMessage = async (
     });
     
     return { id: docRef.id, ...newMessageData };
+};
+
+
+// --- LIVE STREAM FUNCTIONS ---
+
+export const createLiveStream = async (streamData: Omit<LiveStream, 'id' | 'timestamp' | 'viewers'>): Promise<LiveStream> => {
+    const liveStreamsCollectionRef = collection(db, 'liveStreams');
+    const newStreamData = {
+        ...streamData,
+        timestamp: Timestamp.now(),
+        viewers: Math.floor(Math.random() * 5000) + 100, // Random viewers for simulation
+    };
+    const docRef = await addDoc(liveStreamsCollectionRef, newStreamData);
+    return { id: docRef.id, ...newStreamData };
+};
+
+export const getActiveLiveStreams = async (): Promise<LiveStream[]> => {
+    const liveStreamsCollectionRef = collection(db, 'liveStreams');
+    const q = query(liveStreamsCollectionRef, orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LiveStream));
+};
+
+export const deleteLiveStream = async (streamId: string): Promise<void> => {
+    const streamDocRef = doc(db, 'liveStreams', streamId);
+    await deleteDoc(streamDocRef);
 };
