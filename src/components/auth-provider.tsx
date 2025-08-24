@@ -13,30 +13,32 @@ export interface MockUser extends Partial<FirebaseUser> {
     photoURL?: string;
 }
 
-// Stored user will also include the password for local verification.
+// Stored user will no longer include a password.
 interface StoredUserRecord {
-    password: string;
     user: MockUser;
 }
 
 interface AuthContextType {
   user: MockUser | null;
   loading: boolean;
-  loginWithEmail: (email: string, pass: string) => Promise<void>;
-  signupWithEmail: (email: string, pass: string, username: string) => Promise<void>;
+  requestLoginOtp: (email: string) => Promise<string>;
+  verifyLoginOtp: (email: string, otp: string) => Promise<void>;
+  signupWithEmail: (email: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
     user: null, 
     loading: true,
-    loginWithEmail: async () => { throw new Error("Auth context not initialized"); },
+    requestLoginOtp: async () => { throw new Error("Auth context not initialized"); },
+    verifyLoginOtp: async () => { throw new Error("Auth context not initialized"); },
     signupWithEmail: async () => { throw new Error("Auth context not initialized"); },
     logout: async () => { throw new Error("Auth context not initialized"); },
 });
 
 const USER_DB_KEY = 'vivid-stream-user-database';
 const LOGGED_IN_USER_KEY = 'vivid-stream-logged-in-user';
+const OTP_KEY = 'vivid-stream-otp';
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<MockUser | null>(null);
@@ -70,18 +72,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const loginWithEmail = async (email: string, pass: string) => {
+  const requestLoginOtp = async (email: string): Promise<string> => {
+    const userDb = getUserDatabase();
+    if (!userDb[email]) {
+      throw new Error("No account found with this email address.");
+    }
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    sessionStorage.setItem(OTP_KEY, otp); // Use sessionStorage so it's cleared on browser close
+    return otp; // Return for simulation purposes
+  };
+
+  const verifyLoginOtp = async (email: string, otp: string) => {
+    const storedOtp = sessionStorage.getItem(OTP_KEY);
+    if (!storedOtp || storedOtp !== otp) {
+      throw new Error("Invalid OTP. Please try again.");
+    }
+    
     const userDb = getUserDatabase();
     const storedUserRecord = userDb[email];
-    if (storedUserRecord && storedUserRecord.password === pass) {
+    if (storedUserRecord) {
       localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(storedUserRecord.user));
       setUser(storedUserRecord.user);
+      sessionStorage.removeItem(OTP_KEY);
     } else {
-      throw new Error("Invalid email or password.");
+      throw new Error("An unexpected error occurred.");
     }
   };
   
-  const signupWithEmail = async (email: string, pass: string, username: string) => {
+  const signupWithEmail = async (email: string, username: string) => {
     const userDb = getUserDatabase();
     if (userDb[email]) {
         throw new Error("An account with this email already exists on this device.");
@@ -94,11 +112,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         photoURL: `https://placehold.co/100x100.png`,
     };
 
-    userDb[email] = { password: pass, user: newUser };
+    userDb[email] = { user: newUser };
     setUserDatabase(userDb);
-    
-    localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(newUser));
-    setUser(newUser);
   };
 
   const logout = async () => {
@@ -107,7 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithEmail, signupWithEmail, logout }}>
+    <AuthContext.Provider value={{ user, loading, requestLoginOtp, verifyLoginOtp, signupWithEmail, logout }}>
       {children}
     </AuthContext.Provider>
   );
