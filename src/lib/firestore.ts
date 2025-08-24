@@ -17,13 +17,62 @@ import {
   type FirestoreError,
   type Unsubscribe,
   type Timestamp,
+  setDoc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { app } from "./firebase";
-import type { Post, Conversation, Message } from "./types";
+import type { Post, Conversation, Message, UserProfile } from "./types";
 
 const db = getFirestore(app);
 const postsCollection = collection(db, "posts");
 const conversationsCollection = collection(db, "conversations");
+const usersCollection = collection(db, "users");
+
+// User Profile
+export const createUserProfile = (uid: string, profileData: Omit<UserProfile, 'id'>) => {
+  return setDoc(doc(db, "users", uid), profileData);
+};
+
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as UserProfile;
+    }
+    return null;
+};
+
+export const updateUserProfile = (uid: string, data: Partial<UserProfile>) => {
+    return updateDoc(doc(db, "users", uid), data);
+};
+
+
+// Follow functionality
+export const followUser = async (currentUserId: string, targetUserId: string) => {
+    const currentUserRef = doc(db, "users", currentUserId);
+    const targetUserRef = doc(db, "users", targetUserId);
+
+    const batch = writeBatch(db);
+    batch.update(currentUserRef, { following: arrayUnion(targetUserId) });
+    batch.update(targetUserRef, { followers: arrayUnion(currentUserId) });
+    
+    await batch.commit();
+};
+
+export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
+    const currentUserRef = doc(db, "users", currentUserId);
+    const targetUserRef = doc(db, "users", targetUserId);
+
+    const batch = writeBatch(db);
+    batch.update(currentUserRef, { following: arrayRemove(targetUserId) });
+    batch.update(targetUserRef, { followers: arrayRemove(currentUserId) });
+    
+    await batch.commit();
+};
+
 
 // Posts
 export const addPost = (post: DocumentData) => {

@@ -16,10 +16,10 @@ import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
+import { createUserProfile } from "@/lib/firestore";
 
 const formSchema = z.object({
-  username: z.string().min(3, { message: "Username must be at least 3 characters." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
+  username: z.string().min(3, { message: "Username must be at least 3 characters." }).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -32,7 +32,6 @@ export default function SignupPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
-      email: "",
       password: "",
     },
   });
@@ -45,9 +44,29 @@ export default function SignupPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      await updateProfile(userCredential.user, {
+      // Create a fake email for Firebase Auth, as it requires one.
+      const email = `${values.username.toLowerCase()}@brosshare.com`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
+      
+      const newUser = userCredential.user;
+
+      // Update Firebase Auth profile
+      await updateProfile(newUser, {
         displayName: values.username,
+      });
+
+      // Create user profile in Firestore
+      await createUserProfile(newUser.uid, {
+          username: values.username,
+          displayName: values.username,
+          photoURL: "",
+          bio: "",
+          followers: [],
+          following: [],
+          privacySettings: {
+            hideFollowers: false,
+            hideFollowing: false,
+          }
       });
 
       toast({
@@ -58,7 +77,7 @@ export default function SignupPage() {
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred during sign-up.";
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This email is already in use. Please try another.";
+        errorMessage = "This username is already taken. Please try another.";
       }
       toast({
         variant: "destructive",
@@ -96,20 +115,7 @@ export default function SignupPage() {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="Vivid User" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="you@example.com" {...field} />
+                      <Input placeholder="Create a username" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

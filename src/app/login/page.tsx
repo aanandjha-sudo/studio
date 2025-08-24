@@ -10,7 +10,6 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +18,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  username: z.string().min(1, { message: "Username is required." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
@@ -31,7 +30,7 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
@@ -44,7 +43,9 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // We derive the email from the username for Firebase Auth
+      const email = `${values.username.toLowerCase()}@brosshare.com`;
+      await signInWithEmailAndPassword(auth, email, values.password);
       toast({
         title: "Logged In!",
         description: "Welcome back to BRO'S SHARE.",
@@ -53,7 +54,7 @@ export default function LoginPage() {
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred during login.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-          errorMessage = "Invalid email or password. Please try again.";
+          errorMessage = "Invalid username or password. Please try again.";
       }
       toast({
         variant: "destructive",
@@ -86,12 +87,12 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Username</FormLabel>
                     <FormControl>
-                      <Input placeholder="you@example.com" {...field} />
+                      <Input placeholder="your_username" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

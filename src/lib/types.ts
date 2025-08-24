@@ -28,14 +28,22 @@ export interface Message {
 
 export interface UserProfile {
     id: string;
-    name: string;
-    avatarUrl: string;
+    username: string;
+    displayName: string;
+    photoURL?: string;
+    bio?: string;
+    followers: string[];
+    following: string[];
+    privacySettings?: {
+        hideFollowers: boolean;
+        hideFollowing: boolean;
+    }
 }
 
 export interface Conversation {
     id: string;
     participantIds: string[];
-    participants: UserProfile[];
+    participants: Pick<UserProfile, 'id' | 'displayName' | 'photoURL'>[];
     lastMessage: string;
     timestamp: Timestamp;
 }

@@ -13,6 +13,7 @@ import {
   MessageSquare,
   LogOut,
   LogIn,
+  Settings,
 } from "lucide-react";
 import React from "react";
 
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true },
   { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
   { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true },
+  { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
   { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
 ];
 
@@ -72,12 +74,12 @@ const SidebarContent = () => {
     }
     return name.substring(0, 2);
   }
-
-  const getUsername = (email?: string | null) => {
-    if (!email) return "@vividuser";
-    return `@${email.split('@')[0]}`;
-  }
   
+  const getUsername = (displayName?: string | null) => {
+    if (!displayName) return "@vividuser";
+    return `@${displayName}`;
+  }
+
   const visibleNavItems = navItems.filter(item => !item.authRequired || !!user);
 
   return (
@@ -114,7 +116,7 @@ const SidebarContent = () => {
                     </Avatar>
                     <div>
                         <p className="font-semibold">{user.displayName || "Vivid User"}</p>
-                        <p className="text-sm text-muted-foreground">{getUsername(user.email)}</p>
+                        <p className="text-sm text-muted-foreground">{getUsername(user.displayName)}</p>
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
