@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error("An account with this email already exists.");
     }
     
-    // We'll use the email as the UID for simplicity in this mock system.
+    // We'll use the email as the UID for simplicity in this system.
     const uid = email;
     
     await createUserProfile(uid, {
