@@ -6,11 +6,12 @@ import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost, getUserProfile } from "@/lib/firestore-edge";
+import { getPosts, addPost } from "@/lib/firestore-edge";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -46,12 +47,11 @@ export default function FeedPage() {
             variant: "destructive",
             title: "Not signed in",
             description: "You must be signed in to create a post.",
-            action: <button onClick={() => router.push('/login')} className="bg-white text-black p-1 rounded">Login</button>
+            action: <Button onClick={() => router.push('/login')}>Login</Button>
         });
         return;
     }
     
-    // In a real app, you'd get the user's profile. Here we use auth display name.
     if (!user.displayName) {
         toast({
             variant: "destructive",
@@ -65,7 +65,7 @@ export default function FeedPage() {
         author: {
             name: user.displayName || "Anonymous",
             avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
-            handle: user.displayName.toLowerCase() || "user",
+            handle: user.displayName.toLowerCase().replace(/\s/g, '_') || "user",
         },
         userId: user.uid,
         content: content,
@@ -91,7 +91,7 @@ export default function FeedPage() {
   };
 
   const PostSkeleton = () => (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4 border rounded-lg">
         <div className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">

@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
   { href: "/live", label: "Live", icon: Clapperboard, authRequired: false },
   { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
-  { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
+  { href: "/developer", label: "Developer", icon: Shield, authRequired: false },
   { href: "/donate", label: "Donate", icon: Gift, authRequired: false },
 ];
 
@@ -49,13 +49,21 @@ const SidebarContent = () => {
   const { toast } = useToast();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+        await logout();
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+        });
+        router.push("/login");
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Logout Failed",
+            description: "Could not log you out. Please try again."
+        })
+    }
   };
 
   const getInitials = (name?: string | null) => {
@@ -64,12 +72,12 @@ const SidebarContent = () => {
     if (names.length > 1) {
       return `${names[0][0]}${names[names.length - 1][0]}`;
     }
-    return name.substring(0, 2);
+    return name.substring(0, 2).toUpperCase();
   }
   
   const getUsername = (displayName?: string | null) => {
     if (!displayName) return "@vividuser";
-    return `@${displayName.toLowerCase()}`;
+    return `@${displayName.toLowerCase().replace(/\s/g, '_')}`;
   }
 
   return (
@@ -82,6 +90,9 @@ const SidebarContent = () => {
       <nav className="flex-1 p-2 space-y-2">
         {navItems.map((item) => {
           if (item.authRequired && !user) return null;
+          // Hide developer tools for non-dev users
+          if (item.href === "/developer" && user?.email !== "dev@vividstream.com") return null;
+
           return (
             <Link
               key={item.label}
@@ -107,9 +118,9 @@ const SidebarContent = () => {
                         <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt={user.displayName || "user"} />
                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <p className="font-semibold">{user.displayName || "BRO'S SHARE User"}</p>
-                        <p className="text-sm text-muted-foreground">{getUsername(user.displayName)}</p>
+                    <div className="overflow-hidden">
+                        <p className="font-semibold truncate">{user.displayName || "Vivid User"}</p>
+                        <p className="text-sm text-muted-foreground truncate">{getUsername(user.displayName)}</p>
                     </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
