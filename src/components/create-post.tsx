@@ -32,12 +32,15 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || !user) {
-      toast({
+    if (!user) {
+       toast({
           variant: "destructive",
           title: "Please log in",
           description: "You need to be logged in to create a post.",
       });
+      return;
+    }
+    if (!content.trim()) {
       return;
     }
 
@@ -52,7 +55,7 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
         <Card>
             <CardContent className="p-4 text-center">
                 <p className="text-muted-foreground">
-                    <Link href="/login" className="underline text-primary">Log in</Link> to share your thoughts with the community!
+                    <Link href="/login" className="underline text-primary">Log in</Link> or <Link href="/signup" className="underline text-primary">Sign up</Link> to share your thoughts!
                 </p>
             </CardContent>
         </Card>

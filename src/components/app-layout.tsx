@@ -14,7 +14,7 @@ import {
   LogOut,
   LogIn,
 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -136,30 +136,34 @@ const SidebarContent = () => {
   );
 };
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-        const protectedRoutes = navItems.filter(item => item.authRequired).map(item => item.href);
-        if (protectedRoutes.includes(pathname)) {
-             router.push("/login");
-        }
+    if (loading) return;
+
+    const protectedRoutes = navItems
+      .filter((item) => item.authRequired)
+      .map((item) => item.href);
+    
+    const isProtectedRoute = protectedRoutes.includes(pathname);
+
+    if (!user && isProtectedRoute) {
+      router.push("/login");
+    } else {
+      setIsChecking(false);
     }
   }, [user, loading, router, pathname]);
 
-  if (loading) {
-      return (
-          <div className="flex items-center justify-center min-h-screen">
-              <p>Loading...</p>
-          </div>
-      )
-  }
-  
-  if (!user && (pathname === '/login' || pathname === '/signup')) {
-      return <>{children}</>
+  if (isChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
@@ -192,4 +196,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+};
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
+  return <ProtectedLayout>{children}</ProtectedLayout>;
 }
