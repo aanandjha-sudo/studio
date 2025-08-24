@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   UserCircle,
@@ -10,8 +10,8 @@ import {
   Shield,
   Menu,
   LucideIcon,
-  Video,
   MessageSquare,
+  LogOut,
 } from "lucide-react";
 import React from "react";
 
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Logo from "./logo";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavItem {
   href: string;
@@ -37,6 +38,17 @@ const navItems: NavItem[] = [
 
 const SidebarContent = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = () => {
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    router.push("/login");
+  };
+
   return (
     <div className="flex flex-col h-full text-foreground bg-card">
       <div className="p-4 border-b">
@@ -62,15 +74,20 @@ const SidebarContent = () => {
         ))}
       </nav>
       <div className="mt-auto p-4 border-t">
-        <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-                <AvatarImage src="https://placehold.co/100x100.png" alt="@vividuser" />
-                <AvatarFallback>VU</AvatarFallback>
-            </Avatar>
-            <div>
-                <p className="font-semibold">Vivid User</p>
-                <p className="text-sm text-muted-foreground">@vividuser</p>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                    <AvatarImage src="https://placehold.co/100x100.png" alt="@vividuser" />
+                    <AvatarFallback>VU</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">Vivid User</p>
+                    <p className="text-sm text-muted-foreground">@vividuser</p>
+                </div>
             </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
+                <LogOut className="h-5 w-5" />
+            </Button>
         </div>
       </div>
       <div className="px-4 pb-2 text-center text-xs text-muted-foreground">
