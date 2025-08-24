@@ -1,70 +1,85 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
 import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
+import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-
-const posts: Post[] = [
-  {
-    id: "1",
-    author: {
-      name: "PixelQueen",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "pixelqueen",
-    },
-    content: "Just created this new digital art piece. What do you all think? ✨ #digitalart #vividstream",
-    type: "text",
-    likes: 120,
-    comments: 23,
-    shares: 12,
-  },
-  {
-    id: "2",
-    author: {
-      name: "Alex_Travels",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "alextravels",
-    },
-    content: "Sunsets in Santorini are on another level! 🌅",
-    type: "image",
-    mediaUrl: "https://placehold.co/600x400.png",
-    mediaAiHint: "sunset ocean",
-    likes: 450,
-    comments: 88,
-    shares: 45,
-  },
-  {
-    id: "3",
-    author: {
-      name: "SynthWaveMaster",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "synthwave",
-    },
-    content: "New track 'Neon Drive' is out! Check out this little preview. 🎶",
-    type: "video",
-    mediaUrl: "https://placehold.co/600x400.png",
-    mediaAiHint: "neon lights",
-    likes: 210,
-    comments: 54,
-    shares: 33,
-  },
-    {
-    id: "4",
-    author: {
-      name: "FoodieFinds",
-      avatarUrl: "https://placehold.co/100x100.png",
-      handle: "foodiefinds",
-    },
-    content: "This ramen was to die for! Best I've had outside of Japan.",
-    type: "image",
-    mediaUrl: "https://placehold.co/600x400.png",
-    mediaAiHint: "ramen bowl",
-    likes: 315,
-    comments: 76,
-    shares: 21,
-  },
-];
-
+import { getPosts, addPost } from "@/lib/firestore";
+import { useAuth } from "@/components/auth-provider";
+import { serverTimestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FeedPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      const unsubscribe = getPosts(
+        (newPosts) => {
+          setPosts(newPosts);
+          setLoading(false);
+        },
+        (error) => {
+          console.error(error);
+          toast({
+            variant: "destructive",
+            title: "Could not fetch posts",
+            description: "There was an error loading the feed. Please try again later."
+          })
+          setLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    };
+
+    fetchPosts();
+  }, [toast]);
+
+  const handleCreatePost = async (content: string) => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Not signed in",
+            description: "You must be signed in to create a post."
+        });
+        return;
+    }
+
+    const newPost: Omit<Post, 'id' | 'timestamp'> = {
+        author: {
+            name: user.displayName || "Anonymous",
+            avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
+            handle: user.email?.split('@')[0] || "user",
+        },
+        userId: user.uid,
+        content: content,
+        type: "text",
+        likes: 0,
+        comments: 0,
+        shares: 0,
+    };
+    
+    try {
+        await addPost({
+            ...newPost,
+            timestamp: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error creating post:", error);
+        toast({
+            variant: "destructive",
+            title: "Failed to create post",
+            description: "There was an error creating your post. Please try again."
+        });
+    }
+  };
+
   return (
     <AppLayout>
       <div className="flex flex-col h-full">
@@ -73,7 +88,9 @@ export default function FeedPage() {
         </header>
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             <div className="max-w-2xl mx-auto space-y-6">
-              {posts.map((post) => (
+              <CreatePost onCreatePost={handleCreatePost} />
+              {loading && <p>Loading posts...</p>}
+              {!loading && posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
             </div>

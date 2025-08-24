@@ -1,4 +1,6 @@
 
+import type { Timestamp, FieldValue } from "firebase/firestore";
+
 export interface Post {
     id: string;
     author: {
@@ -6,6 +8,7 @@ export interface Post {
       avatarUrl: string;
       handle: string;
     };
+    userId: string;
     content: string;
     type: 'text' | 'image' | 'video';
     mediaUrl?: string;
@@ -13,6 +16,7 @@ export interface Post {
     likes: number;
     comments: number;
     shares: number;
+    timestamp: Timestamp | FieldValue;
   }
 
 export interface Message {
