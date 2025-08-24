@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Heart, Gift } from "lucide-react";
+import { Send, Heart, Gift, Zap } from "lucide-react";
+import SuperChat from "@/components/super-chat";
+import type { SuperChat as SuperChatType } from "@/lib/types";
 
 interface ChatMessage {
     user: string;
@@ -24,7 +26,8 @@ const initialMessages: ChatMessage[] = [
 ];
 
 export default function LivePage() {
-    const [messages, setMessages] = useState(initialMessages);
+    const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+    const [superChats, setSuperChats] = useState<SuperChatType[]>([]);
     const [newMessage, setNewMessage] = useState("");
 
     const handleSendMessage = (e: React.FormEvent) => {
@@ -39,6 +42,10 @@ export default function LivePage() {
             setNewMessage("");
         }
     }
+
+    const handleSendSuperChat = (chat: SuperChatType) => {
+        setSuperChats([chat, ...superChats]);
+    };
 
     return (
         <AppLayout>
@@ -64,12 +71,23 @@ export default function LivePage() {
                                 LIVE
                             </div>
                         </CardHeader>
-                        <CardContent className="flex-1">
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
+                        <CardContent className="flex-1 flex flex-col">
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden relative mb-4">
                                 <Image src="https://placehold.co/1280x720.png" layout="fill" objectFit="cover" alt="Live stream" data-ai-hint="digital art" />
                                 <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-md text-sm">
                                     👤 1.2k watching
                                 </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto space-y-2">
+                                {superChats.map((chat, index) => (
+                                    <div key={index} className={`p-3 rounded-lg text-white`} style={{ backgroundColor: chat.color }}>
+                                        <div className="font-bold flex justify-between">
+                                            <span>{chat.user}</span>
+                                            <span>${chat.amount.toFixed(2)}</span>
+                                        </div>
+                                        <p>{chat.message}</p>
+                                    </div>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>
@@ -109,6 +127,12 @@ export default function LivePage() {
                                     <Heart/>
                                     <span className="text-xs">React</span>
                                 </Button>
+                                <SuperChat onSendSuperChat={handleSendSuperChat}>
+                                     <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-yellow-500">
+                                        <Zap/>
+                                        <span className="text-xs">Super Chat</span>
+                                    </Button>
+                                </SuperChat>
                                 <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-green-500">
                                     <Gift/>
                                     <span className="text-xs">Send Gift</span>

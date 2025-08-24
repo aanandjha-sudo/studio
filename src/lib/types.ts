@@ -33,3 +33,10 @@ export interface Conversation {
     timestamp: string;
     unread: number;
 }
+
+export interface SuperChat {
+    user: string;
+    message: string;
+    amount: number;
+    color: string;
+}
