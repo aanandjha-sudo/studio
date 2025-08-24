@@ -1,29 +1,21 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import AppLayout from "@/components/app-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Search, MoreVertical } from "lucide-react";
+import { Send, Search, MoreVertical, MessageSquare } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
 import { getConversations, getMessages, addMessage } from "@/lib/firestore";
-import { serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
-// Placeholder for users you can message
-const availableUsers = [
-  { id: "user2", name: "PixelQueen", avatarUrl: "https://placehold.co/100x100.png" },
-  { id: "user3", name: "Alex_Travels", avatarUrl: "https://placehold.co/100x100.png" },
-  { id: "user4", name: "SynthWaveMaster", avatarUrl: "https://placehold.co/100x100.png" },
-];
-
-
 export default function MessagesPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -83,6 +75,33 @@ export default function MessagesPage() {
   
   const getParticipant = (convo: Conversation) => {
       return convo.participants.find(p => p.id !== user?.uid);
+  }
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p>Loading...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+            <MessageSquare className="w-16 h-16 text-muted-foreground mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Login to view messages</h2>
+            <p className="text-muted-foreground mb-4">
+                You need to be logged in to send and receive messages.
+            </p>
+            <Button asChild>
+                <Link href="/login">Login / Sign Up</Link>
+            </Button>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (

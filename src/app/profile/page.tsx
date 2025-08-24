@@ -2,13 +2,15 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Grid3x3, Clapperboard, Bookmark, UserX } from "lucide-react";
+import { Grid3x3, Clapperboard, Bookmark, UserX, UserCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth-provider";
 
 const userPosts = [
   { id: 1, type: 'image', url: 'https://placehold.co/400x400.png', aiHint: 'abstract painting' },
@@ -22,19 +24,63 @@ const userPosts = [
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
 
-  const handleMessage = () => {
-    // In a real app, you'd create a conversation if one doesn't exist
-    // and then navigate to it.
-    router.push('/messages');
+  const handleAuthAction = (callback: () => void) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Please log in",
+        description: "You need to be logged in to perform this action.",
+        action: <Button onClick={() => router.push('/login')}>Login</Button>
+      });
+    } else {
+      callback();
+    }
   };
+  
+  const handleMessage = () => handleAuthAction(() => router.push('/messages'));
 
-  const handleBlock = () => {
+  const handleBlock = () => handleAuthAction(() => {
     toast({
         variant: "destructive",
         title: "User Blocked",
-        description: "@vividuser has been blocked. You will no longer see their posts or be able to message them.",
+        description: "@vividuser has been blocked.",
     });
+  });
+
+  const handleFollow = () => handleAuthAction(() => {
+      toast({
+          title: "Followed!",
+          description: "You are now following @vividuser.",
+      });
+  });
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p>Loading...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+            <UserCircle className="w-16 h-16 text-muted-foreground mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Login to see your profile</h2>
+            <p className="text-muted-foreground mb-4">
+                Your personal profile, posts, and saved items will be here.
+            </p>
+            <Button asChild>
+                <Link href="/login">Login / Sign Up</Link>
+            </Button>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (
@@ -44,12 +90,12 @@ export default function ProfilePage() {
           <div className="max-w-4xl mx-auto">
             <header className="flex flex-col md:flex-row items-center gap-8 mb-10">
               <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-primary">
-                <AvatarImage src="https://placehold.co/200x200.png" />
-                <AvatarFallback>VU</AvatarFallback>
+                <AvatarImage src={user.photoURL || "https://placehold.co/200x200.png"} />
+                <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
               <div className="text-center md:text-left">
-                <h1 className="text-3xl font-bold">Vivid User</h1>
-                <p className="text-muted-foreground mt-1">@vividuser</p>
+                <h1 className="text-3xl font-bold">{user.displayName || "Vivid User"}</h1>
+                <p className="text-muted-foreground mt-1">@{user.email?.split('@')[0] || 'vividuser'}</p>
                 <p className="mt-4 max-w-md">
                   Digital creator | Exploring the world one pixel at a time | Lover of sunsets and synthwave 🎵
                 </p>
@@ -68,7 +114,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2 justify-center md:justify-start">
-                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Follow</Button>
+                  <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleFollow}>Follow</Button>
                   <Button variant="outline" onClick={handleMessage}>Message</Button>
                   <Button variant="outline" size="icon" onClick={handleBlock} aria-label="Block user">
                     <UserX className="h-5 w-5 text-destructive" />

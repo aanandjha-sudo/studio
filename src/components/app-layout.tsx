@@ -14,7 +14,7 @@ import {
   LogOut,
   LogIn,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -136,41 +136,7 @@ const SidebarContent = () => {
   );
 };
 
-const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    // We don't want to run this check on the server, only on the client.
-    if (typeof window === 'undefined') {
-        return;
-    }
-    
-    if (loading) return;
-
-    const protectedRoutes = navItems
-      .filter((item) => item.authRequired)
-      .map((item) => item.href);
-    
-    const isProtectedRoute = protectedRoutes.includes(pathname);
-
-    if (!user && isProtectedRoute) {
-      router.replace("/login");
-    } else {
-      setIsChecking(false);
-    }
-  }, [user, loading, router, pathname]);
-
-  if (isChecking) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
+const AppContent = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">
@@ -203,7 +169,6 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/signup';
@@ -212,5 +177,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  return <ProtectedLayout>{children}</ProtectedLayout>;
+  return <AppContent>{children}</AppContent>;
 }
