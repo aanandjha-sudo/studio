@@ -40,7 +40,7 @@ export default function FeedPage() {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleCreatePost = async (content: string, type: 'text' | 'image' | 'video') => {
+  const handleCreatePost = async (content: string, type: 'text' | 'image' | 'video', mediaUrl?: string) => {
     if (!user) {
         toast({
             variant: "destructive",
@@ -70,10 +70,7 @@ export default function FeedPage() {
         userId: user.uid,
         content: content,
         type: type,
-        ...(type !== 'text' && { 
-            mediaUrl: 'https://placehold.co/600x400.png',
-            mediaAiHint: type === 'image' ? 'abstract gradient' : 'futuristic cityscape'
-        })
+        ...(type !== 'text' && { mediaUrl }),
     };
     
     const newPost = await addPost(newPostData);

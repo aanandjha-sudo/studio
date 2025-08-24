@@ -68,21 +68,19 @@ export default function PostCard({ post }: { post: Post }) {
       </CardHeader>
 
       <CardContent className="px-4 pb-2">
-        <p className="whitespace-pre-wrap">{post.content}</p>
+        {post.content && <p className="whitespace-pre-wrap">{post.content}</p>}
         {post.type !== "text" && post.mediaUrl && (
-          <div className="mt-4 relative rounded-lg overflow-hidden border">
-            <Image
-              src={post.mediaUrl}
-              alt="Post media"
-              width={600}
-              height={400}
-              className="w-full h-auto object-cover"
-              data-ai-hint={post.mediaAiHint}
-            />
-            {post.type === "video" && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <PlayCircle className="w-16 h-16 text-white/80" />
-                </div>
+          <div className={`relative mt-4 rounded-lg overflow-hidden border ${!post.content ? 'mt-0' : ''}`}>
+            {post.type === 'image' ? (
+                <Image
+                    src={post.mediaUrl}
+                    alt="Post media"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto object-cover"
+                />
+            ) : (
+                <video src={post.mediaUrl} controls className="w-full h-auto" />
             )}
           </div>
         )}
