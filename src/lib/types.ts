@@ -1,4 +1,5 @@
 
+
 export interface Post {
     id: string;
     author: {
@@ -53,4 +54,13 @@ export interface SuperChat {
     message: string;
     amount: number;
     color: string;
+}
+
+// Stored user credentials for mock auth
+export interface StoredUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  password?: string;
 }

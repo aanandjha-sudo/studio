@@ -6,11 +6,11 @@ import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost } from "@/lib/firestore";
+import { getPosts, addPost, getUserProfile } from "@/lib/firestore";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { getUserProfile } from "@/lib/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -40,7 +40,7 @@ export default function FeedPage() {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleCreatePost = async (content: string) => {
+  const handleCreatePost = async (content: string, type: 'text' | 'image' | 'video') => {
     if (!user) {
         toast({
             variant: "destructive",
@@ -69,12 +69,35 @@ export default function FeedPage() {
         },
         userId: user.uid,
         content: content,
-        type: 'text' as 'text',
+        type: type,
+        ...(type !== 'text' && { 
+            mediaUrl: 'https://placehold.co/600x400.png',
+            mediaAiHint: type === 'image' ? 'abstract gradient' : 'futuristic cityscape'
+        })
     };
     
     const newPost = await addPost(newPostData);
-    setPosts([newPost, ...posts]);
+    setPosts(prevPosts => [newPost, ...prevPosts]);
+    toast({
+        title: "Post Created!",
+        description: "Your post is now live on the feed.",
+    });
   };
+
+  const PostSkeleton = () => (
+    <div className="space-y-4">
+        <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+            </div>
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-[200px] w-full rounded-xl" />
+    </div>
+  );
 
   return (
     <AppLayout>
@@ -86,8 +109,9 @@ export default function FeedPage() {
             <div className="max-w-2xl mx-auto space-y-6">
               <CreatePost onCreatePost={handleCreatePost} />
               {loading && (
-                <div className="text-center py-8">
-                  <p>Loading posts...</p>
+                <div className="space-y-6">
+                  <PostSkeleton />
+                  <PostSkeleton />
                 </div>
               )}
               {!loading && posts.map((post) => (

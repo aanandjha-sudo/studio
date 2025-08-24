@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
 interface CreatePostProps {
-  onCreatePost: (content: string) => Promise<void>;
+  onCreatePost: (content: string, type: 'text' | 'image' | 'video') => Promise<void>;
 }
 
 export default function CreatePost({ onCreatePost }: CreatePostProps) {
@@ -29,10 +29,9 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
     }
     return name.substring(0, 2);
   }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
+  
+  const handlePost = async (type: 'text' | 'image' | 'video') => {
+     if (!user) {
        toast({
           variant: "destructive",
           title: "Please log in",
@@ -40,14 +39,25 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
       });
       return;
     }
-    if (!content.trim()) {
+    if (!content.trim() && type === 'text') {
+      toast({
+          variant: "destructive",
+          title: "Cannot post empty message",
+          description: "Please write something before posting.",
+      });
       return;
     }
-
+    
     setIsSubmitting(true);
-    await onCreatePost(content);
+    const postContent = type === 'text' ? content : `Check out my new ${type}!`;
+    await onCreatePost(postContent, type);
     setContent("");
     setIsSubmitting(false);
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handlePost('text');
   };
 
   if (!user) {
@@ -81,10 +91,10 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
           </div>
           <div className="mt-4 flex justify-between items-center">
             <div className="flex gap-2 text-muted-foreground">
-              <Button variant="ghost" size="icon" type="button" disabled>
+              <Button variant="ghost" size="icon" type="button" onClick={() => handlePost('image')} disabled={isSubmitting}>
                 <ImageIcon />
               </Button>
-              <Button variant="ghost" size="icon" type="button" disabled>
+              <Button variant="ghost" size="icon" type="button" onClick={() => handlePost('video')} disabled={isSubmitting}>
                 <Video />
               </Button>
             </div>

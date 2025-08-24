@@ -2,6 +2,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { StoredUser } from '@/lib/types';
+import { createUserProfile } from '@/lib/firestore';
+import { mockAuthUsers } from '@/lib/mock-data';
 
 // Mock User type, equivalent to FirebaseUser
 interface MockUser {
@@ -9,11 +12,6 @@ interface MockUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-}
-
-// Stored user credentials for mock auth
-interface StoredUser extends MockUser {
-    password?: string;
 }
 
 // Mock UserCredential type
@@ -37,22 +35,16 @@ const AuthContext = createContext<AuthContextType>({
     logout: async () => { throw new Error("Auth context not initialized"); },
 });
 
-// In-memory store for users
-const mockUserDatabase: StoredUser[] = [];
-
-const defaultUser: MockUser = {
-  uid: 'mock-user-123',
-  email: 'user@example.com',
-  displayName: 'BRO S SHARE User',
-  photoURL: 'https://placehold.co/100x100.png',
-};
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setUser(null); 
+    // Check for a logged-in user in sessionStorage
+    const storedUser = sessionStorage.getItem('authUser');
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+    }
     setLoading(false);
   }, []);
 
@@ -61,15 +53,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log(`Attempting login for: ${email}`);
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            const foundUser = mockUserDatabase.find(u => u.email === email && u.password === pass);
+            const foundUser = mockAuthUsers.find(u => u.email === email && u.password === pass);
             if (foundUser) {
-                const loggedInUser = {
+                const loggedInUser: MockUser = {
                     uid: foundUser.uid,
                     email: foundUser.email,
                     displayName: foundUser.displayName,
                     photoURL: foundUser.photoURL,
                 };
                 setUser(loggedInUser);
+                sessionStorage.setItem('authUser', JSON.stringify(loggedInUser));
                 setLoading(false);
                 resolve({ user: loggedInUser });
             } else {
@@ -84,12 +77,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     console.log(`Mock Signup with: ${email}, username: ${username}`);
      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (mockUserDatabase.some(u => u.email === email)) {
+        setTimeout(async () => {
+            if (mockAuthUsers.some(u => u.email === email)) {
                 setLoading(false);
                 return reject(new Error("Email already in use."));
             }
-            if (mockUserDatabase.some(u => u.displayName === username)) {
+            if (mockAuthUsers.some(u => u.displayName === username)) {
                 setLoading(false);
                 return reject(new Error("Username already taken."));
             }
@@ -102,13 +95,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 password: pass
             };
 
-            mockUserDatabase.push(newUser);
-            console.log("Current user db:", mockUserDatabase);
+            mockAuthUsers.push(newUser);
+            console.log("Current auth user db:", mockAuthUsers);
+
+            // Create a corresponding user profile
+            await createUserProfile(newUser.uid, {
+                username: username,
+                displayName: username,
+                email: email,
+                photoURL: newUser.photoURL
+            });
             
-            const userForSession = { ...newUser };
-            delete userForSession.password; // Don't keep password in the active user state
+            const userForSession: MockUser = { 
+              uid: newUser.uid,
+              email: newUser.email,
+              displayName: newUser.displayName,
+              photoURL: newUser.photoURL
+            };
 
             setUser(userForSession);
+            sessionStorage.setItem('authUser', JSON.stringify(userForSession));
             setLoading(false);
             resolve({ user: userForSession });
         }, 500);
@@ -120,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return new Promise(resolve => {
         setTimeout(() => {
             setUser(null);
+            sessionStorage.removeItem('authUser');
             setLoading(false);
             resolve();
         }, 500);
