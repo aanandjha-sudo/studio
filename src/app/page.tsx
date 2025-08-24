@@ -10,14 +10,17 @@ import { getPosts, addPost } from "@/lib/firestore";
 import { useAuth } from "@/components/auth-provider";
 import { serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function FeedPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = getPosts(
       (newPosts) => {
         setPosts(newPosts);
@@ -41,7 +44,8 @@ export default function FeedPage() {
         toast({
             variant: "destructive",
             title: "Not signed in",
-            description: "You must be signed in to create a post."
+            description: "You must be signed in to create a post.",
+            action: <button onClick={() => router.push('/login')} className="bg-white text-black p-1 rounded">Login</button>
         });
         return;
     }
@@ -84,11 +88,19 @@ export default function FeedPage() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             <div className="max-w-2xl mx-auto space-y-6">
               <CreatePost onCreatePost={handleCreatePost} />
-              {loading && <p>Loading posts...</p>}
+              {loading && (
+                <div className="text-center py-8">
+                  <p>Loading posts...</p>
+                </div>
+              )}
               {!loading && posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
-              {!loading && posts.length === 0 && <p>No posts yet. Be the first to share something!</p>}
+              {!loading && posts.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                    <p>No posts yet. Be the first to share something!</p>
+                </div>
+              )}
             </div>
         </div>
       </div>
