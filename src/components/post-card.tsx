@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from "next/image";
@@ -14,13 +15,26 @@ import {
 } from "./ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "./auth-provider";
+import { useRouter } from "next/navigation";
 
 const reactions = ["❤️", "😂", "🤯", "😢", "😡"];
 
 export default function PostCard({ post }: { post: Post }) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const handleAction = (action: string) => {
+    if (!user) {
+        toast({
+            variant: "destructive",
+            title: "Please log in",
+            description: "You need to be logged in to perform this action.",
+            action: <Button onClick={() => router.push('/login')}>Login</Button>
+        });
+        return;
+    }
     toast({
       title: action,
     });

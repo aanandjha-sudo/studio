@@ -12,6 +12,7 @@ import {
   LucideIcon,
   MessageSquare,
   LogOut,
+  LogIn,
 } from "lucide-react";
 import React, { useEffect } from "react";
 
@@ -29,14 +30,15 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  authRequired: boolean;
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Feed", icon: Home },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/profile", label: "Profile", icon: UserCircle },
-  { href: "/live", label: "Go Live", icon: Clapperboard },
-  { href: "/developer", label: "Developer", icon: Shield },
+  { href: "/", label: "Feed", icon: Home, authRequired: false },
+  { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true },
+  { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
+  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true },
+  { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
 ];
 
 const SidebarContent = () => {
@@ -75,6 +77,8 @@ const SidebarContent = () => {
     if (!email) return "@vividuser";
     return `@${email.split('@')[0]}`;
   }
+  
+  const visibleNavItems = navItems.filter(item => !item.authRequired || user);
 
   return (
     <div className="flex flex-col h-full text-foreground bg-card">
@@ -84,7 +88,7 @@ const SidebarContent = () => {
         </Link>
       </div>
       <nav className="flex-1 p-2 space-y-2">
-        {navItems.map((item) => (
+        {visibleNavItems.map((item) => (
           <Link
             key={item.label}
             href={item.href}
@@ -101,21 +105,29 @@ const SidebarContent = () => {
         ))}
       </nav>
       <div className="mt-auto p-4 border-t">
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt={user?.displayName || "user"} />
-                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="font-semibold">{user?.displayName || "Vivid User"}</p>
-                    <p className="text-sm text-muted-foreground">{getUsername(user?.email)}</p>
+        {user ? (
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt={user.displayName || "user"} />
+                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-semibold">{user.displayName || "Vivid User"}</p>
+                        <p className="text-sm text-muted-foreground">{getUsername(user.email)}</p>
+                    </div>
                 </div>
+                <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
+                    <LogOut className="h-5 w-5" />
+                </Button>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
-                <LogOut className="h-5 w-5" />
+        ) : (
+             <Button asChild className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" /> Login / Sign Up
+                </Link>
             </Button>
-        </div>
+        )}
       </div>
       <div className="px-4 pb-2 text-center text-xs text-muted-foreground">
         <p>Created by ajleader</p>
@@ -131,7 +143,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-        if (pathname !== "/login" && pathname !== "/signup") {
+        const protectedRoutes = navItems.filter(item => item.authRequired).map(item => item.href);
+        if (protectedRoutes.includes(pathname)) {
              router.push("/login");
         }
     }
@@ -145,7 +158,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )
   }
   
-  if (!user) {
+  if (!user && (pathname === '/login' || pathname === '/signup')) {
       return <>{children}</>
   }
 

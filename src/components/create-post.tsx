@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Image as ImageIcon, Video, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface CreatePostProps {
   onCreatePost: (content: string) => Promise<void>;
@@ -17,6 +19,7 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
   const { user } = useAuth();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const getInitials = (name?: string | null) => {
     if (!name) return "VU";
@@ -29,7 +32,14 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || !user) {
+      toast({
+          variant: "destructive",
+          title: "Please log in",
+          description: "You need to be logged in to create a post.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     await onCreatePost(content);
@@ -38,7 +48,15 @@ export default function CreatePost({ onCreatePost }: CreatePostProps) {
   };
 
   if (!user) {
-    return null;
+    return (
+        <Card>
+            <CardContent className="p-4 text-center">
+                <p className="text-muted-foreground">
+                    <Link href="/login" className="underline text-primary">Log in</Link> to share your thoughts with the community!
+                </p>
+            </CardContent>
+        </Card>
+    )
   }
 
   return (
