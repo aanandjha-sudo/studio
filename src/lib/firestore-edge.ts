@@ -16,7 +16,8 @@ import {
     Timestamp,
     arrayUnion, 
     arrayRemove,
-    deleteDoc
+    deleteDoc,
+    writeBatch
 } from 'firebase/firestore';
 import type { Post, UserProfile, Conversation, Message, LiveStream } from './types';
 
@@ -64,13 +65,14 @@ export const unfollowUser = async (currentUserId: string, targetUserId: string) 
 };
 
 // --- POST FUNCTIONS ---
-export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' | 'shares' | 'timestamp'>): Promise<Post> => {
+export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' | 'shares' | 'timestamp' | 'commentsData'>): Promise<Post> => {
     const postsCollectionRef = collection(db, 'posts');
     const newPostData = {
         ...postData,
         likes: 0,
         comments: 0,
         shares: 0,
+        commentsData: [],
         timestamp: Timestamp.now(),
     };
     const docRef = await addDoc(postsCollectionRef, newPostData);
@@ -84,6 +86,11 @@ export const getPosts = async (): Promise<Post[]> => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
 };
 
+export const updatePost = async (postId: string, updatedData: Partial<Post>) => {
+    const postRef = doc(db, "posts", postId);
+    await updateDoc(postRef, updatedData);
+}
+
 
 // --- MESSAGING FUNCTIONS ---
 export const getConversations = async (userId: string): Promise<Conversation[]> => {
@@ -91,23 +98,33 @@ export const getConversations = async (userId: string): Promise<Conversation[]> 
     const q = query(convosCollectionRef, where('participantIds', 'array-contains', userId));
     const querySnapshot = await getDocs(q);
     
-    const conversations = querySnapshot.docs.map(doc => doc.data() as Conversation);
+    const conversations = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data
+        } as Conversation;
+    });
 
-    // Fetch user details for participants
+    const participantProfiles = new Map<string, any>();
+
     for (const convo of conversations) {
-        convo.participants = [];
         for (const pid of convo.participantIds) {
-            const userProfile = await getUserProfile(pid);
-            if (userProfile) {
-                convo.participants.push({
-                    id: userProfile.id,
-                    displayName: userProfile.displayName,
-                    photoURL: userProfile.photoURL,
-                });
+            if (!participantProfiles.has(pid)) {
+                const userProfile = await getUserProfile(pid);
+                if (userProfile) {
+                    participantProfiles.set(pid, {
+                        id: userProfile.id,
+                        displayName: userProfile.displayName,
+                        photoURL: userProfile.photoURL,
+                    });
+                }
             }
         }
+        convo.participants = convo.participantIds.map(pid => participantProfiles.get(pid)).filter(Boolean);
     }
-    return conversations.sort((a, b) => b.timestamp - a.timestamp);
+    
+    return conversations.sort((a, b) => (b.timestamp as Timestamp).toMillis() - (a.timestamp as Timestamp).toMillis());
 };
 
 export const getMessages = async (conversationId: string): Promise<Message[]> => {
@@ -129,16 +146,20 @@ export const addMessage = async (
         text,
         timestamp: Timestamp.now(),
     };
-    const docRef = await addDoc(messagesCollectionRef, newMessageData);
-
-    // Update the conversation's last message
+    
     const convoDocRef = doc(db, 'conversations', conversationId);
-    await updateDoc(convoDocRef, {
+    
+    const batch = writeBatch(db);
+    const newMessageRef = doc(collection(db, `conversations/${conversationId}/messages`));
+    batch.set(newMessageRef, newMessageData);
+    batch.update(convoDocRef, {
         lastMessage: text,
         timestamp: newMessageData.timestamp,
     });
     
-    return { id: docRef.id, ...newMessageData };
+    await batch.commit();
+    
+    return { id: newMessageRef.id, ...newMessageData };
 };
 
 

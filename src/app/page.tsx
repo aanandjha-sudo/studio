@@ -6,7 +6,7 @@ import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost } from "@/lib/firestore-edge";
+import { getPosts, addPost, updatePost } from "@/lib/firestore-edge";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -90,6 +90,12 @@ export default function FeedPage() {
     }
   };
 
+  const handlePostUpdate = (updatedPost: Post) => {
+    setPosts(prevPosts => prevPosts.map(p => p.id === updatedPost.id ? updatedPost : p));
+    updatePost(updatedPost.id, updatedPost);
+  };
+
+
   const PostSkeleton = () => (
     <div className="space-y-4 p-4 border rounded-lg">
         <div className="flex items-center space-x-4">
@@ -121,7 +127,7 @@ export default function FeedPage() {
                 </div>
               )}
               {!loading && posts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} onPostUpdate={handlePostUpdate} />
               ))}
               {!loading && posts.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">

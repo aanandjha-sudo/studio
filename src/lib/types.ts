@@ -1,7 +1,16 @@
 
-
 import type { Timestamp } from 'firebase/firestore';
 
+export interface Comment {
+    id: string;
+    author: {
+      name: string;
+      avatarUrl: string;
+      handle: string;
+    };
+    content: string;
+    timestamp: number;
+}
 export interface Post {
     id: string;
     author: {
@@ -17,6 +26,7 @@ export interface Post {
     likes: number;
     comments: number;
     shares: number;
+    commentsData?: Comment[];
     timestamp: Timestamp | number; 
   }
 
