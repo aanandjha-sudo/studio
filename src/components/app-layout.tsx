@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -10,6 +11,7 @@ import {
   Menu,
   LucideIcon,
   Video,
+  MessageSquare,
 } from "lucide-react";
 import React from "react";
 
@@ -27,6 +29,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Feed", icon: Home },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/profile", label: "Profile", icon: UserCircle },
   { href: "/live", label: "Go Live", icon: Clapperboard },
   { href: "/developer", label: "Developer", icon: Shield },
@@ -74,7 +77,7 @@ const SidebarContent = () => {
   );
 };
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.Node }) {
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">

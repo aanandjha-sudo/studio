@@ -1,3 +1,4 @@
+
 export interface Post {
     id: string;
     author: {
@@ -13,4 +14,22 @@ export interface Post {
     comments: number;
     shares: number;
   }
-  
+
+export interface Message {
+    id: string;
+    sender: string;
+    text: string;
+    timestamp: string;
+    isOwn: boolean;
+}
+
+export interface Conversation {
+    id: string;
+    participant: {
+        name: string;
+        avatarUrl: string;
+    };
+    lastMessage: string;
+    timestamp: string;
+    unread: number;
+}

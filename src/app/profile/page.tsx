@@ -1,10 +1,14 @@
+
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AppLayout from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Grid3x3, Clapperboard, Bookmark } from "lucide-react";
+import { Grid3x3, Clapperboard, Bookmark, UserX } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const userPosts = [
   { id: 1, type: 'image', url: 'https://placehold.co/400x400.png', aiHint: 'abstract painting' },
@@ -16,6 +20,23 @@ const userPosts = [
 ];
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleMessage = () => {
+    // In a real app, you'd create a conversation if one doesn't exist
+    // and then navigate to it.
+    router.push('/messages');
+  };
+
+  const handleBlock = () => {
+    toast({
+        variant: "destructive",
+        title: "User Blocked",
+        description: "@vividuser has been blocked. You will no longer see their posts or be able to message them.",
+    });
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col h-full">
@@ -48,7 +69,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="mt-6 flex gap-2 justify-center md:justify-start">
                   <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Follow</Button>
-                  <Button variant="outline">Message</Button>
+                  <Button variant="outline" onClick={handleMessage}>Message</Button>
+                  <Button variant="outline" size="icon" onClick={handleBlock} aria-label="Block user">
+                    <UserX className="h-5 w-5 text-destructive" />
+                  </Button>
                 </div>
               </div>
             </header>
