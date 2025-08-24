@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { href: "/", label: "Feed", icon: Home, authRequired: false },
   { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true },
   { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
-  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true },
+  { href: "/live", label: "Live", icon: Clapperboard, authRequired: false },
   { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
   { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
 ];
@@ -106,7 +106,7 @@ const SidebarContent = () => {
                         <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="font-semibold">{user.displayName || "Vivid User"}</p>
+                        <p className="font-semibold">{user.displayName || "BRO'S SHARE User"}</p>
                         <p className="text-sm text-muted-foreground">{getUsername(user.displayName)}</p>
                     </div>
                 </div>

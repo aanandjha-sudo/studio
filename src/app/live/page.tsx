@@ -1,153 +1,78 @@
-"use client"
 
-import React, { useState } from "react";
+"use client";
+
+import React from "react";
 import Image from "next/image";
 import AppLayout from "@/components/app-layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Heart, Gift, Zap } from "lucide-react";
-import SuperChat from "@/components/super-chat";
-import type { SuperChat as SuperChatType } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Camera, User, Clapperboard } from "lucide-react";
+import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import LiveStreamPlayer from "@/components/live-stream-player";
 
-interface ChatMessage {
-    user: string;
-    avatar: string;
-    message: string;
-    color: string;
-}
-
-const initialMessages: ChatMessage[] = [
-    { user: 'PixelFan', avatar: 'https://placehold.co/100x100.png', message: 'This stream is amazing! 🔥', color: 'text-green-400' },
-    { user: 'SynthLover', avatar: 'https://placehold.co/100x100.png', message: 'Loving the vibes!', color: 'text-blue-400' },
-    { user: 'ArtAdmirer', avatar: 'https://placehold.co/100x100.png', message: 'So cool to see the process!', color: 'text-purple-400' },
+const activeStreams = [
+    { id: 1, user: 'PixelFan', title: 'Creating a new masterpiece', viewers: 1200, thumbnail: 'https://placehold.co/600x400.png', hint: 'digital art' },
+    { id: 2, user: 'SynthLover', title: 'Live DJ Set - Retro Vibes', viewers: 850, thumbnail: 'https://placehold.co/600x400.png', hint: 'music dj set' },
+    { id: 3, user: 'ArtAdmirer', title: 'Watercolor painting session', viewers: 450, thumbnail: 'https://placehold.co/600x400.png', hint: 'painting canvas' },
+    { id: 4, user: 'GameStrider', title: 'Speedrunning a classic game', viewers: 2300, thumbnail: 'https://placehold.co/600x400.png', hint: 'gaming controller' },
 ];
 
 export default function LivePage() {
-    const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-    const [superChats, setSuperChats] = useState<SuperChatType[]>([]);
-    const [newMessage, setNewMessage] = useState("");
-    const { toast } = useToast();
-
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newMessage.trim()) {
-            setMessages([...messages, {
-                user: 'You',
-                avatar: 'https://placehold.co/100x100.png',
-                message: newMessage,
-                color: 'text-orange-400'
-            }]);
-            setNewMessage("");
-        }
-    }
-
-    const handleSendSuperChat = (chat: SuperChatType) => {
-        setSuperChats([chat, ...superChats]);
-    };
-
-    const handleAction = (action: string) => {
-        toast({
-            title: action,
-        });
-    };
 
     return (
         <AppLayout>
-            <div className="w-full h-full grid grid-cols-1 lg:grid-cols-3 lg:gap-4 p-4">
-                <div className="lg:col-span-2">
-                    <Card className="h-full flex flex-col">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="w-12 h-12 border-2 border-red-500">
-                                    <AvatarImage src="https://placehold.co/100x100.png" />
-                                    <AvatarFallback>VU</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle>Vivid User is Live!</CardTitle>
-                                    <p className="text-sm text-muted-foreground">Creating a new masterpiece</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 bg-red-500/20 text-red-500 px-3 py-1 rounded-full">
-                                <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                </span>
-                                LIVE
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col">
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden relative mb-4">
-                                <Image src="https://placehold.co/1280x720.png" layout="fill" objectFit="cover" alt="Live stream" data-ai-hint="digital art" />
-                                <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-md text-sm">
-                                    👤 1.2k watching
-                                </div>
-                            </div>
-                            <div className="flex-1 overflow-y-auto space-y-2">
-                                {superChats.map((chat, index) => (
-                                    <div key={index} className={`p-3 rounded-lg text-white`} style={{ backgroundColor: chat.color }}>
-                                        <div className="font-bold flex justify-between">
-                                            <span>{chat.user}</span>
-                                            <span>${chat.amount.toFixed(2)}</span>
-                                        </div>
-                                        <p>{chat.message}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-                <div className="lg:col-span-1 mt-4 lg:mt-0">
-                    <Card className="h-full flex flex-col">
-                        <CardHeader>
-                            <CardTitle>Live Chat</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col overflow-hidden">
-                            <ScrollArea className="flex-1 pr-4 -mr-4 mb-4">
-                                <div className="space-y-4">
-                                    {messages.map((msg, index) => (
-                                        <div key={index} className="flex items-start gap-3">
-                                            <Avatar className="w-8 h-8">
-                                                <AvatarImage src={msg.avatar} />
-                                                <AvatarFallback>{msg.user.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <span className={`font-semibold text-sm ${msg.color}`}>{msg.user}</span>
-                                                <p className="text-sm">{msg.message}</p>
+            <div className="flex flex-col h-full">
+                <header className="p-4 border-b flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold">Live Streams</h1>
+                        <p className="text-muted-foreground">Watch what's happening now</p>
+                    </div>
+                    <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                        <Link href="/live/go">
+                            <Camera className="mr-2 h-4 w-4" /> Go Live
+                        </Link>
+                    </Button>
+                </header>
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {activeStreams.length > 0 ? activeStreams.map(stream => (
+                           <Dialog key={stream.id}>
+                               <DialogTrigger asChild>
+                                    <Card className="overflow-hidden cursor-pointer group">
+                                        <div className="relative aspect-video">
+                                            <Image src={stream.thumbnail} alt={stream.title} layout="fill" objectFit="cover" className="transition-transform group-hover:scale-105" data-ai-hint={stream.hint} />
+                                            <div className="absolute top-2 left-2 bg-red-500/80 text-white px-2 py-0.5 rounded-md text-xs font-bold">LIVE</div>
+                                            <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-0.5 rounded-md text-xs flex items-center gap-1">
+                                                <User className="h-3 w-3" />
+                                                {stream.viewers.toLocaleString()}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                            <form onSubmit={handleSendMessage} className="flex gap-2 border-t pt-4">
-                                <Input 
-                                    placeholder="Send a message..." 
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                />
-                                <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 shrink-0"><Send className="h-4 w-4" /></Button>
-                            </form>
-                             <div className="flex justify-around pt-4">
-                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-red-500" onClick={() => handleAction("Reaction sent!")}>
-                                    <Heart/>
-                                    <span className="text-xs">React</span>
-                                </Button>
-                                <SuperChat onSendSuperChat={handleSendSuperChat}>
-                                     <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-yellow-500">
-                                        <Zap/>
-                                        <span className="text-xs">Super Chat</span>
-                                    </Button>
-                                </SuperChat>
-                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-green-500" onClick={() => handleAction("Gift sent!")}>
-                                    <Gift/>
-                                    <span className="text-xs">Send Gift</span>
-                                </Button>
+                                        <CardHeader>
+                                            <CardTitle className="truncate">{stream.title}</CardTitle>
+                                            <CardDescription>by {stream.user}</CardDescription>
+                                        </CardHeader>
+                                    </Card>
+                               </DialogTrigger>
+                               <DialogContent className="max-w-4xl p-0 border-0">
+                                   <LiveStreamPlayer stream={stream} />
+                               </DialogContent>
+                           </Dialog>
+                        )) : (
+                            <div className="col-span-full text-center py-16 text-muted-foreground">
+                                <Clapperboard className="mx-auto h-12 w-12 mb-4" />
+                                <h3 className="text-xl font-semibold">No one is live right now</h3>
+                                <p>Why not be the first one?</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        )}
+                    </div>
                 </div>
             </div>
         </AppLayout>
