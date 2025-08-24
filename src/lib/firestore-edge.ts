@@ -69,7 +69,7 @@ export const followUser = async (currentUserId: string, targetUserId: string) =>
     await updateDoc(targetUserDocRef, { followers: arrayUnion(currentUserId) });
 };
 
-export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
+export const unfollowUser = async (currentUserId: string, targetUserId:string) => {
     const currentUserDocRef = doc(db, 'users', currentUserId);
     const targetUserDocRef = doc(db, 'users', targetUserId);
 
@@ -78,7 +78,7 @@ export const unfollowUser = async (currentUserId: string, targetUserId: string) 
 };
 
 // --- POST FUNCTIONS ---
-export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' | 'shares' | 'timestamp' | 'commentsData'>): Promise<Post> => {
+export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' | 'shares' | 'timestamp' | 'commentsData' | 'likedBy'>): Promise<Post> => {
     const postsCollectionRef = collection(db, 'posts');
     const newPostData = {
         ...postData,
@@ -95,7 +95,19 @@ export const addPost = async (postData: Omit<Post, 'id' | 'likes' | 'comments' |
 
 export const getPosts = async (): Promise<Post[]> => {
     const postsCollectionRef = collection(db, 'posts');
-    const q = query(postsCollectionRef, orderBy('timestamp', 'desc'));
+    
+    // Calculate the date one year ago from now
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgoTimestamp = Timestamp.fromDate(oneYearAgo);
+
+    // Query for posts created in the last year, ordered by most recent
+    const q = query(
+        postsCollectionRef, 
+        where('timestamp', '>=', oneYearAgoTimestamp),
+        orderBy('timestamp', 'desc')
+    );
+    
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
 };

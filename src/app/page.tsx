@@ -65,7 +65,7 @@ export default function FeedPage() {
         author: {
             name: user.displayName || "Anonymous",
             avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
-            handle: user.displayName.toLowerCase().replace(/\s/g, '_') || "user",
+            handle: user.displayName.toLowerCase().replace(/\\s/g, '_') || "user",
         },
         userId: user.uid,
         content: content,
