@@ -126,14 +126,14 @@ const SidebarContent = () => {
   );
 };
 
-const AppContent = ({ children }: { children: React.ReactNode }) => {
+const AppContent = React.memo(function AppContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
+    <div className="grid h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">
         <SidebarContent />
       </aside>
-      <div className="flex flex-col">
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:hidden">
+      <div className="flex flex-col h-screen">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:hidden shrink-0">
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0">
@@ -151,13 +151,13 @@ const AppContent = ({ children }: { children: React.ReactNode }) => {
             </Link>
           </div>
         </header>
-        <main className="flex-1 flex-col overflow-auto bg-background">
+        <main className="flex-1 overflow-auto bg-background">
           {children}
         </main>
       </div>
     </div>
   );
-};
+});
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

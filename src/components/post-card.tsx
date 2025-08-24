@@ -17,10 +17,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./auth-provider";
 import { useRouter } from "next/navigation";
+import React from "react";
 
 const reactions = ["❤️", "😂", "🤯", "😢", "😡"];
 
-export default function PostCard({ post }: { post: Post }) {
+const PostCard = React.memo(function PostCard({ post }: { post: Post }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
@@ -120,4 +121,6 @@ export default function PostCard({ post }: { post: Post }) {
       </CardFooter>
     </Card>
   );
-}
+});
+
+export default PostCard;
