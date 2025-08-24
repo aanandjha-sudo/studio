@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Grid3x3, Clapperboard, Bookmark, UserX, UserCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { followUser, unfollowUser, getUserProfile } from "@/lib/mock-data";
+import { followUser, unfollowUser, getUserProfile } from "@/lib/firestore";
 import React, { useEffect, useState, useCallback } from "react";
 import type { UserProfile } from "@/lib/types";
 
@@ -31,8 +31,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
 
-  const fetchProfile = useCallback((uid: string) => {
-    const userProfile = getUserProfile(uid);
+  const fetchProfile = useCallback(async (uid: string) => {
+    const userProfile = await getUserProfile(uid);
     setProfile(userProfile);
     if (user && userProfile?.followers) {
       setIsFollowing(userProfile.followers.includes(user.uid));
@@ -68,16 +68,16 @@ export default function ProfilePage() {
     });
   });
 
-  const handleFollowToggle = () => handleAuthAction(() => {
+  const handleFollowToggle = () => handleAuthAction(async () => {
     if (!user || !profile) return;
     if (isFollowing) {
-      unfollowUser(user.uid, profile.id);
+      await unfollowUser(user.uid, profile.id);
       toast({ title: `Unfollowed @${profile.username}` });
     } else {
-      followUser(user.uid, profile.id);
+      await followUser(user.uid, profile.id);
       toast({ title: `Followed @${profile.username}` });
     }
-    fetchProfile(profile.id);
+    await fetchProfile(profile.id);
   });
 
   if (loading) {
@@ -122,7 +122,7 @@ export default function ProfilePage() {
               </Avatar>
               <div className="text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-4">
-                  <h1 className="text-3xl font-bold">{profile.displayName || "Vivid User"}</h1>
+                  <h1 className="text-3xl font-bold">{profile.displayName || "BRO'S SHARE User"}</h1>
                    {profile.id === user.uid && (
                      <Button variant="ghost" size="icon" asChild>
                        <Link href="/settings">
@@ -131,7 +131,7 @@ export default function ProfilePage() {
                      </Button>
                    )}
                 </div>
-                <p className="text-muted-foreground mt-1">@{profile.username || 'vividuser'}</p>
+                <p className="text-muted-foreground mt-1">@{profile.username || 'brosuser'}</p>
                 <p className="mt-4 max-w-md">
                   {profile.bio || 'Digital creator | Exploring the world one pixel at a time.'}
                 </p>

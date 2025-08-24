@@ -1,15 +1,16 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost } from "@/lib/mock-data";
+import { getPosts, addPost } from "@/lib/firestore";
 import { useAuth } from "@/components/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { getUserProfile } from "@/lib/firestore";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -18,12 +19,26 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
-    const newPosts = getPosts();
-    setPosts(newPosts);
-    setLoading(false);
-  }, []);
+    try {
+      const newPosts = await getPosts();
+      setPosts(newPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not fetch posts.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleCreatePost = async (content: string) => {
     if (!user) {
@@ -35,18 +50,29 @@ export default function FeedPage() {
         });
         return;
     }
+    
+    const userProfile = await getUserProfile(user.uid);
+    if (!userProfile) {
+        toast({
+            variant: "destructive",
+            title: "Profile not found",
+            description: "Could not find your user profile to create a post.",
+        });
+        return;
+    }
 
     const newPostData = {
         author: {
-            name: user.displayName || "Anonymous",
-            avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
-            handle: user.displayName?.toLowerCase() || "user",
+            name: userProfile.displayName || "Anonymous",
+            avatarUrl: userProfile.photoURL || "https://placehold.co/100x100.png",
+            handle: userProfile.username || "user",
         },
         userId: user.uid,
         content: content,
+        type: 'text' as 'text',
     };
     
-    const newPost = addPost(newPostData);
+    const newPost = await addPost(newPostData);
     setPosts([newPost, ...posts]);
   };
 

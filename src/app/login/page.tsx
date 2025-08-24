@@ -23,13 +23,13 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, login, loading } = useAuth();
+  const { user, loginWithEmail, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "test@example.com",
-      password: "password",
+      email: "",
+      password: "",
     },
   });
 
@@ -40,12 +40,21 @@ export default function LoginPage() {
   }, [user, loading, router]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    login({ email: values.email, displayName: "Vivid User" });
-    toast({
-      title: "Logged In!",
-      description: "Welcome back to Vivid Stream.",
-    });
-    router.push("/");
+    try {
+      await loginWithEmail(values.email, values.password);
+      toast({
+        title: "Logged In!",
+        description: "Welcome back to BRO'S SHARE.",
+      });
+      router.push("/");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message || "An unexpected error occurred. Please try again.",
+      });
+    }
   };
 
   if (loading || user) {
@@ -64,7 +73,7 @@ export default function LoginPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-          <CardDescription>Enter any credentials to access your account.</CardDescription>
+          <CardDescription>Enter your credentials to access your account.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

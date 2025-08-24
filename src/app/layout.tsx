@@ -20,7 +20,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Vivid Stream",
+  title: "BRO'S SHARE",
   description: "A dynamic social media platform for sharing and engaging with content.",
 };
 

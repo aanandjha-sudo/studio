@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Search, MoreVertical, MessageSquare } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
-import { getConversations, getMessages, addMessage } from "@/lib/mock-data";
+import { getConversations, getMessages, addMessage } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MessagesPage() {

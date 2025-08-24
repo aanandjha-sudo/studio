@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { createUserProfile } from "@/lib/mock-data";
+import { createUserProfile } from "@/lib/firestore";
 
 const formSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
@@ -25,7 +25,7 @@ const formSchema = z.object({
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, login, loading } = useAuth();
+  const { user, signupWithEmail, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,25 +42,30 @@ export default function SignupPage() {
     }
   }, [user, loading, router]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const newUser = createUserProfile({
-      username: values.username,
-      email: values.email,
-      displayName: values.username,
-    });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      const userCredential = await signupWithEmail(values.email, values.password);
+      const newUser = userCredential.user;
+      
+      await createUserProfile(newUser.uid, {
+        username: values.username,
+        email: values.email,
+        displayName: values.username,
+      });
 
-    login({
-        uid: newUser.id,
-        email: newUser.email,
-        displayName: newUser.displayName,
-        photoURL: newUser.photoURL,
-    });
-
-    toast({
-      title: "Account Created!",
-      description: "Welcome to Vivid Stream. You are now logged in.",
-    });
-    router.push("/");
+      toast({
+        title: "Account Created!",
+        description: "Welcome to BRO'S SHARE. You are now logged in.",
+      });
+      router.push("/");
+    } catch (error: any) {
+        console.error("Signup failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Signup Failed",
+            description: error.message || "An unexpected error occurred. Please try again.",
+        });
+    }
   };
   
   if (loading || user) {
@@ -79,7 +84,7 @@ export default function SignupPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join Vivid Stream today!</CardDescription>
+          <CardDescription>Join BRO'S SHARE today!</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

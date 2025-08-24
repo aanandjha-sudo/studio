@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getUserProfile, updateUserProfile } from "@/lib/mock-data";
+import { getUserProfile, updateUserProfile } from "@/lib/firestore";
 import type { UserProfile } from "@/lib/types";
 import { Home } from "lucide-react";
 
@@ -24,8 +24,8 @@ export default function SettingsPage() {
   const [hideFollowing, setHideFollowing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchProfile = useCallback((uid: string) => {
-    const userProfile = getUserProfile(uid);
+  const fetchProfile = useCallback(async (uid: string) => {
+    const userProfile = await getUserProfile(uid);
     setProfile(userProfile);
     setHideFollowers(userProfile?.privacySettings?.hideFollowers || false);
     setHideFollowing(userProfile?.privacySettings?.hideFollowing || false);
@@ -43,16 +43,25 @@ export default function SettingsPage() {
   const handleSaveChanges = async () => {
     if (!user) return;
     setIsSaving(true);
-    updateUserProfile(user.uid, {
-      privacySettings: {
-        hideFollowers,
-        hideFollowing,
-      },
-    });
-    toast({
-      title: "Settings Saved",
-      description: "Your privacy settings have been updated.",
-    });
+    try {
+        await updateUserProfile(user.uid, {
+            privacySettings: {
+                hideFollowers,
+                hideFollowing,
+            },
+        });
+        toast({
+            title: "Settings Saved",
+            description: "Your privacy settings have been updated.",
+        });
+    } catch (error) {
+        console.error("Failed to save settings:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not save your settings. Please try again.",
+        });
+    }
     setIsSaving(false);
   };
 
