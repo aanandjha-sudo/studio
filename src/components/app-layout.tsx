@@ -13,7 +13,7 @@ import {
   MessageSquare,
   LogOut,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Logo from "./logo";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "./auth-provider";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 interface NavItem {
   href: string;
@@ -40,14 +43,38 @@ const SidebarContent = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push("/login");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "There was an error logging out.",
+      });
+    }
   };
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "VU";
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`;
+    }
+    return name.substring(0, 2);
+  }
+
+  const getUsername = (email?: string | null) => {
+    if (!email) return "@vividuser";
+    return `@${email.split('@')[0]}`;
+  }
 
   return (
     <div className="flex flex-col h-full text-foreground bg-card">
@@ -77,12 +104,12 @@ const SidebarContent = () => {
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://placehold.co/100x100.png" alt="@vividuser" />
-                    <AvatarFallback>VU</AvatarFallback>
+                    <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} alt={user?.displayName || "user"} />
+                    <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <p className="font-semibold">Vivid User</p>
-                    <p className="text-sm text-muted-foreground">@vividuser</p>
+                    <p className="font-semibold">{user?.displayName || "Vivid User"}</p>
+                    <p className="text-sm text-muted-foreground">{getUsername(user?.email)}</p>
                 </div>
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
@@ -98,6 +125,30 @@ const SidebarContent = () => {
 };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!loading && !user) {
+        if (pathname !== "/login" && pathname !== "/signup") {
+             router.push("/login");
+        }
+    }
+  }, [user, loading, router, pathname]);
+
+  if (loading) {
+      return (
+          <div className="flex items-center justify-center min-h-screen">
+              <p>Loading...</p>
+          </div>
+      )
+  }
+  
+  if (!user) {
+      return <>{children}</>
+  }
+
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">
