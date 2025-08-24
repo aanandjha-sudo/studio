@@ -44,13 +44,14 @@ export default function SignupPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Create a fake email for Firebase Auth, as it requires one.
-      const email = `${values.username.toLowerCase()}@brosshare.com`;
+      // Firebase Auth requires a valid email format, so we create one from the username.
+      // This email is only for authentication and won't be shown to users.
+      const email = `${values.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brosshare-user.com`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
       
       const newUser = userCredential.user;
 
-      // Update Firebase Auth profile
+      // Update Firebase Auth profile displayName to the chosen username
       await updateProfile(newUser, {
         displayName: values.username,
       });
@@ -71,13 +72,15 @@ export default function SignupPage() {
 
       toast({
         title: "Account Created!",
-        description: "Welcome to BRO'S SHARE. Please log in.",
+        description: "Welcome to BRO'S SHARE. You are now logged in.",
       });
-      router.push("/login");
+      router.push("/");
     } catch (error: any) {
-      let errorMessage = "An unexpected error occurred during sign-up.";
+      let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This username is already taken. Please try another.";
+        errorMessage = "This username is already taken. Please choose another.";
+      } else if (error.code) {
+          errorMessage = `An error occurred: ${error.code.replace('auth/', '')}`;
       }
       toast({
         variant: "destructive",

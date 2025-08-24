@@ -43,8 +43,8 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // We derive the email from the username for Firebase Auth
-      const email = `${values.username.toLowerCase()}@brosshare.com`;
+      // Recreate the same email format used during signup to authenticate the user
+      const email = `${values.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brosshare-user.com`;
       await signInWithEmailAndPassword(auth, email, values.password);
       toast({
         title: "Logged In!",
