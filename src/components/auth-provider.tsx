@@ -13,8 +13,11 @@ export interface MockUser extends Partial<FirebaseUser> {
     photoURL?: string;
 }
 
-// In-memory storage for mock users. In a real app, this would be your database.
-const mockUserDatabase: { [email: string]: { password: string, user: MockUser } } = {};
+// Stored user will also include the password for local verification.
+interface StoredUserRecord {
+    password: string;
+    user: MockUser;
+}
 
 interface AuthContextType {
   user: MockUser | null;
@@ -32,13 +35,31 @@ const AuthContext = createContext<AuthContextType>({
     logout: async () => { throw new Error("Auth context not initialized"); },
 });
 
+const USER_DB_KEY = 'vivid-stream-user-database';
+const LOGGED_IN_USER_KEY = 'vivid-stream-logged-in-user';
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper to get user database from localStorage
+  const getUserDatabase = (): { [email: string]: StoredUserRecord } => {
+    try {
+      const db = localStorage.getItem(USER_DB_KEY);
+      return db ? JSON.parse(db) : {};
+    } catch (e) {
+      return {};
+    }
+  };
+
+  // Helper to save user database to localStorage
+  const setUserDatabase = (db: { [email: string]: StoredUserRecord }) => {
+    localStorage.setItem(USER_DB_KEY, JSON.stringify(db));
+  };
+
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem('vivid-stream-user');
+      const storedUser = localStorage.getItem(LOGGED_IN_USER_KEY);
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
@@ -50,18 +71,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginWithEmail = async (email: string, pass: string) => {
-    const storedUser = mockUserDatabase[email];
-    if (storedUser && storedUser.password === pass) {
-      localStorage.setItem('vivid-stream-user', JSON.stringify(storedUser.user));
-      setUser(storedUser.user);
+    const userDb = getUserDatabase();
+    const storedUserRecord = userDb[email];
+    if (storedUserRecord && storedUserRecord.password === pass) {
+      localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(storedUserRecord.user));
+      setUser(storedUserRecord.user);
     } else {
       throw new Error("Invalid email or password.");
     }
   };
   
   const signupWithEmail = async (email: string, pass: string, username: string) => {
-    if (mockUserDatabase[email]) {
-        throw new Error("An account with this email already exists.");
+    const userDb = getUserDatabase();
+    if (userDb[email]) {
+        throw new Error("An account with this email already exists on this device.");
     }
 
     const newUser: MockUser = {
@@ -71,14 +94,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         photoURL: `https://placehold.co/100x100.png`,
     };
 
-    mockUserDatabase[email] = { password: pass, user: newUser };
+    userDb[email] = { password: pass, user: newUser };
+    setUserDatabase(userDb);
     
-    localStorage.setItem('vivid-stream-user', JSON.stringify(newUser));
+    localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(newUser));
     setUser(newUser);
   };
 
   const logout = async () => {
-    localStorage.removeItem('vivid-stream-user');
+    localStorage.removeItem(LOGGED_IN_USER_KEY);
     setUser(null);
   };
 
