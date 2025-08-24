@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Heart, Gift, Zap } from "lucide-react";
 import SuperChat from "@/components/super-chat";
 import type { SuperChat as SuperChatType } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
     user: string;
@@ -29,6 +30,7 @@ export default function LivePage() {
     const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
     const [superChats, setSuperChats] = useState<SuperChatType[]>([]);
     const [newMessage, setNewMessage] = useState("");
+    const { toast } = useToast();
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,6 +47,12 @@ export default function LivePage() {
 
     const handleSendSuperChat = (chat: SuperChatType) => {
         setSuperChats([chat, ...superChats]);
+    };
+
+    const handleAction = (action: string) => {
+        toast({
+            title: action,
+        });
     };
 
     return (
@@ -123,7 +131,7 @@ export default function LivePage() {
                                 <Button type="submit" size="icon" className="bg-accent hover:bg-accent/90 shrink-0"><Send className="h-4 w-4" /></Button>
                             </form>
                              <div className="flex justify-around pt-4">
-                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-red-500">
+                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-red-500" onClick={() => handleAction("Reaction sent!")}>
                                     <Heart/>
                                     <span className="text-xs">React</span>
                                 </Button>
@@ -133,7 +141,7 @@ export default function LivePage() {
                                         <span className="text-xs">Super Chat</span>
                                     </Button>
                                 </SuperChat>
-                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-green-500">
+                                <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground hover:text-green-500" onClick={() => handleAction("Gift sent!")}>
                                     <Gift/>
                                     <span className="text-xs">Send Gift</span>
                                 </Button>

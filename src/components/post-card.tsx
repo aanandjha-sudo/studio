@@ -13,10 +13,19 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { useToast } from "@/hooks/use-toast";
 
 const reactions = ["❤️", "😂", "🤯", "😢", "😡"];
 
 export default function PostCard({ post }: { post: Post }) {
+  const { toast } = useToast();
+
+  const handleAction = (action: string) => {
+    toast({
+      title: action,
+    });
+  };
+
   return (
     <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
@@ -37,9 +46,9 @@ export default function PostCard({ post }: { post: Post }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Follow @{post.author.handle}</DropdownMenuItem>
-            <DropdownMenuItem>Mute post</DropdownMenuItem>
-            <DropdownMenuItem>Report post</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAction(`Followed @${post.author.handle}`)}>Follow @{post.author.handle}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAction("Post muted")}>Mute post</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleAction("Post reported")}>Report post</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -72,10 +81,10 @@ export default function PostCard({ post }: { post: Post }) {
             <span>{post.comments} Comments</span>
         </div>
         <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-500/10">
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-500/10" onClick={() => handleAction("Post liked!")}>
                 <Heart className="h-5 w-5" />
             </Button>
-             <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10">
+             <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => handleAction("Comment added!")}>
                 <MessageCircle className="h-5 w-5" />
             </Button>
             <Popover>
@@ -87,12 +96,12 @@ export default function PostCard({ post }: { post: Post }) {
                 <PopoverContent className="w-auto p-1">
                     <div className="flex gap-1">
                         {reactions.map((r) => (
-                            <Button key={r} variant="ghost" size="icon" className="text-xl rounded-full">{r}</Button>
+                            <Button key={r} variant="ghost" size="icon" className="text-xl rounded-full" onClick={() => handleAction(`Reacted with ${r}`)}>{r}</Button>
                         ))}
                     </div>
                 </PopoverContent>
             </Popover>
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10">
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10" onClick={() => handleAction("Post shared!")}>
                 <Share2 className="h-5 w-5" />
             </Button>
         </div>
