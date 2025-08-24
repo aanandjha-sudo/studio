@@ -30,6 +30,7 @@ export interface UserProfile {
     id: string;
     username: string;
     displayName: string;
+    email: string;
     photoURL?: string;
     bio?: string;
     followers: string[];

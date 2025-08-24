@@ -35,7 +35,11 @@ const usersCollection = collection(db, "users");
 export const createUserProfile = (uid: string, profileData: Omit<UserProfile, 'id'>) => {
   const userProfile: UserProfile = {
     id: uid,
-    ...profileData,
+    username: profileData.username,
+    displayName: profileData.displayName,
+    email: profileData.email,
+    photoURL: profileData.photoURL || "",
+    bio: profileData.bio || "",
     followers: [],
     following: [],
      privacySettings: {

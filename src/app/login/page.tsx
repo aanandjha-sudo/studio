@@ -18,7 +18,7 @@ import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 
 const formSchema = z.object({
-  username: z.string().min(1, { message: "Username is required." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -43,9 +43,7 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Recreate the same email format used during signup to authenticate the user
-      const email = `${values.username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brosshare-user.com`;
-      await signInWithEmailAndPassword(auth, email, values.password);
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: "Logged In!",
         description: "Welcome back to BRO'S SHARE.",
@@ -54,7 +52,7 @@ export default function LoginPage() {
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred during login.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-          errorMessage = "Invalid username or password. Please try again.";
+          errorMessage = "Invalid email or password. Please try again.";
       }
       toast({
         variant: "destructive",
@@ -87,12 +85,12 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="your_username" {...field} />
+                      <Input placeholder="you@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -20,6 +20,7 @@ import { createUserProfile } from "@/lib/firestore";
 
 const formSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+  email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
@@ -32,6 +33,7 @@ export default function SignupPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
     },
   });
@@ -44,26 +46,21 @@ export default function SignupPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const email = `${values.username.toLowerCase()}@brosshare-user.com`;
-      const userCredential = await createUserWithEmailAndPassword(auth, email, values.password);
-      
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
 
+      // Update the user's profile with their chosen username
       await updateProfile(newUser, {
         displayName: values.username,
       });
 
+      // Create the user profile in Firestore
       await createUserProfile(newUser.uid, {
-          username: values.username,
-          displayName: values.username,
-          photoURL: "",
-          bio: "",
-          followers: [],
-          following: [],
-          privacySettings: {
-            hideFollowers: false,
-            hideFollowing: false,
-          }
+        username: values.username,
+        email: newUser.email!, // Use the email from the authenticated user
+        displayName: values.username,
+        photoURL: "",
+        bio: "",
       });
 
       toast({
@@ -74,9 +71,9 @@ export default function SignupPage() {
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This username is already taken. Please choose another.";
-      } else if (error.code) {
-          errorMessage = `Signup failed: ${error.code.replace('auth/', '')}`;
+        errorMessage = "This email is already registered. Please try logging in.";
+      } else {
+          errorMessage = `Signup failed: ${error.message}`;
       }
       toast({
         variant: "destructive",
@@ -115,6 +112,19 @@ export default function SignupPage() {
                     <FormLabel>Username</FormLabel>
                     <FormControl>
                       <Input placeholder="Create a username" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
