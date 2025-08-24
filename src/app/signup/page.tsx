@@ -44,17 +44,8 @@ export default function SignupPage() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const { user: newUser } = await signupWithEmail(values.email, values.password);
+      await signupWithEmail(values.email, values.password, values.username);
       
-      // In a real app, you'd still call your backend to create a profile.
-      // Here, we'll just log it to show it works.
-      console.log("Creating user profile for:", newUser.uid, values.username);
-      // await createUserProfile(newUser.uid, {
-      //   username: values.username,
-      //   email: values.email,
-      //   displayName: values.username,
-      // });
-
       toast({
         title: "Account Created!",
         description: "Welcome to BRO'S SHARE. You are now logged in.",
@@ -65,7 +56,7 @@ export default function SignupPage() {
         toast({
             variant: "destructive",
             title: "Signup Failed",
-            description: "An unexpected error occurred. Please try again.",
+            description: error.message || "An unexpected error occurred. Please try again.",
         });
     }
   };
