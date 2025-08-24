@@ -32,15 +32,16 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   authRequired: boolean;
+  alwaysVisible: boolean;
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Feed", icon: Home, authRequired: false },
-  { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true },
-  { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
-  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true },
-  { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
-  { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
+  { href: "/", label: "Feed", icon: Home, authRequired: false, alwaysVisible: true },
+  { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true, alwaysVisible: true },
+  { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true, alwaysVisible: true },
+  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true, alwaysVisible: true },
+  { href: "/settings", label: "Settings", icon: Settings, authRequired: true, alwaysVisible: false },
+  { href: "/developer", label: "Developer", icon: Shield, authRequired: true, alwaysVisible: false },
 ];
 
 const SidebarContent = () => {
@@ -80,7 +81,10 @@ const SidebarContent = () => {
     return `@${displayName}`;
   }
 
-  const visibleNavItems = navItems.filter(item => !item.authRequired || !!user);
+  const visibleNavItems = navItems.filter(item => {
+    if (item.alwaysVisible) return true;
+    return user; // Only show if user is logged in for non-alwaysVisible items
+  });
 
   return (
     <div className="flex flex-col h-full text-foreground bg-card">

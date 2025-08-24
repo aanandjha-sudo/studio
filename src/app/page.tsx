@@ -18,27 +18,22 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      const unsubscribe = getPosts(
-        (newPosts) => {
-          setPosts(newPosts);
-          setLoading(false);
-        },
-        (error) => {
-          console.error(error);
-          toast({
-            variant: "destructive",
-            title: "Could not fetch posts",
-            description: "There was an error loading the feed. Please try again later."
-          })
-          setLoading(false);
-        }
-      );
-      return () => unsubscribe();
-    };
-
-    fetchPosts();
+    const unsubscribe = getPosts(
+      (newPosts) => {
+        setPosts(newPosts);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching posts:", error);
+        toast({
+          variant: "destructive",
+          title: "Could not fetch posts",
+          description: "There was an error loading the feed. Please try again later."
+        })
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
   }, [toast]);
 
   const handleCreatePost = async (content: string) => {
@@ -55,7 +50,7 @@ export default function FeedPage() {
         author: {
             name: user.displayName || "Anonymous",
             avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
-            handle: user.email?.split('@')[0] || "user",
+            handle: user.displayName?.toLowerCase() || "user",
         },
         userId: user.uid,
         content: content,
@@ -93,6 +88,7 @@ export default function FeedPage() {
               {!loading && posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}
+              {!loading && posts.length === 0 && <p>No posts yet. Be the first to share something!</p>}
             </div>
         </div>
       </div>
