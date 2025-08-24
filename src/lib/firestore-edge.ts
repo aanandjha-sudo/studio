@@ -23,6 +23,7 @@ import type { Post, UserProfile, Conversation, Message, LiveStream, Comment } fr
 
 // --- USER PROFILE FUNCTIONS ---
 export const createUserProfile = async (uid: string, profileData: Omit<UserProfile, 'id' | 'followers' | 'following'>): Promise<void> => {
+    // using email as doc id, so we use uid for that.
     const userDocRef = doc(db, 'users', uid);
     const userProfile: UserProfile = {
         id: uid,
@@ -36,10 +37,22 @@ export const createUserProfile = async (uid: string, profileData: Omit<UserProfi
     await setDoc(userDocRef, userProfile);
 };
 
-export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
-    const userDocRef = doc(db, 'users', uid);
+export const getUserProfile = async (uidOrEmail: string): Promise<UserProfile | null> => {
+    const userDocRef = doc(db, 'users', uidOrEmail);
     const userSnap = await getDoc(userDocRef);
-    return userSnap.exists() ? userSnap.data() as UserProfile : null;
+    if (userSnap.exists()) {
+        return userSnap.data() as UserProfile;
+    }
+
+    // Fallback to query by email if uid lookup fails, for robustness
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where("email", "==", uidOrEmail));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data() as UserProfile;
+    }
+
+    return null;
 };
 
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>) => {
