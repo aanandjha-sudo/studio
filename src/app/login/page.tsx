@@ -13,8 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
 
 const formSchema = z.object({
@@ -25,13 +23,13 @@ const formSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, login, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "test@example.com",
+      password: "password",
     },
   });
 
@@ -42,24 +40,12 @@ export default function LoginPage() {
   }, [user, loading, router]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Logged In!",
-        description: "Welcome back to BRO'S SHARE.",
-      });
-      router.push("/");
-    } catch (error: any) {
-      let errorMessage = "An unexpected error occurred during login.";
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-          errorMessage = "Invalid email or password. Please try again.";
-      }
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: errorMessage,
-      });
-    }
+    login({ email: values.email, displayName: "Vivid User" });
+    toast({
+      title: "Logged In!",
+      description: "Welcome back to Vivid Stream.",
+    });
+    router.push("/");
   };
 
   if (loading || user) {
@@ -78,7 +64,7 @@ export default function LoginPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardDescription>Enter any credentials to access your account.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

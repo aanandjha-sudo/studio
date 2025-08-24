@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getUserProfile, updateUserProfile } from "@/lib/firestore";
+import { getUserProfile, updateUserProfile } from "@/lib/mock-data";
 import type { UserProfile } from "@/lib/types";
 import { Home } from "lucide-react";
 
@@ -24,8 +24,8 @@ export default function SettingsPage() {
   const [hideFollowing, setHideFollowing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchProfile = useCallback(async (uid: string) => {
-    const userProfile = await getUserProfile(uid);
+  const fetchProfile = useCallback((uid: string) => {
+    const userProfile = getUserProfile(uid);
     setProfile(userProfile);
     setHideFollowers(userProfile?.privacySettings?.hideFollowers || false);
     setHideFollowing(userProfile?.privacySettings?.hideFollowing || false);
@@ -43,27 +43,17 @@ export default function SettingsPage() {
   const handleSaveChanges = async () => {
     if (!user) return;
     setIsSaving(true);
-    try {
-      await updateUserProfile(user.uid, {
-        privacySettings: {
-          hideFollowers,
-          hideFollowing,
-        },
-      });
-      toast({
-        title: "Settings Saved",
-        description: "Your privacy settings have been updated.",
-      });
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not save your settings. Please try again.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    updateUserProfile(user.uid, {
+      privacySettings: {
+        hideFollowers,
+        hideFollowing,
+      },
+    });
+    toast({
+      title: "Settings Saved",
+      description: "Your privacy settings have been updated.",
+    });
+    setIsSaving(false);
   };
 
   if (loading || !profile) {

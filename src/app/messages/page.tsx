@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Search, MoreVertical, MessageSquare } from "lucide-react";
 import type { Message, Conversation } from "@/lib/types";
 import { useAuth } from "@/components/auth-provider";
-import { getConversations, getMessages, addMessage } from "@/lib/firestore";
+import { getConversations, getMessages, addMessage } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
 export default function MessagesPage() {
@@ -24,49 +24,29 @@ export default function MessagesPage() {
 
    useEffect(() => {
     if (!user) return;
-    const unsubscribe = getConversations(
-      user.uid,
-      (convos) => {
-        setConversations(convos);
-        if (!selectedConversation && convos.length > 0) {
-            setSelectedConversation(convos[0]);
-        }
-      },
-      (error) => {
-        console.error("Error fetching conversations:", error);
-        toast({ variant: "destructive", title: "Could not load chats" });
-      }
-    );
-    return () => unsubscribe();
-  }, [user, selectedConversation, toast]);
+    const convos = getConversations(user.uid);
+    setConversations(convos);
+    if (!selectedConversation && convos.length > 0) {
+        setSelectedConversation(convos[0]);
+    }
+  }, [user, selectedConversation]);
 
   useEffect(() => {
     if (!selectedConversation) return;
-    const unsubscribe = getMessages(
-      selectedConversation.id,
-      setMessages,
-      (error) => {
-        console.error("Error fetching messages:", error);
-        toast({ variant: "destructive", title: "Could not load messages" });
-      }
-    );
-    return () => unsubscribe();
-  }, [selectedConversation, toast]);
+    const initialMessages = getMessages(selectedConversation.id);
+    setMessages(initialMessages);
+  }, [selectedConversation]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !user || !selectedConversation) return;
 
     const receiverId = selectedConversation.participants.find(p => p.id !== user.uid)?.id;
     if (!receiverId) return;
 
-    try {
-        await addMessage(selectedConversation.id, user.uid, receiverId, newMessage);
-        setNewMessage("");
-    } catch (error) {
-        console.error("Error sending message:", error);
-        toast({ variant: "destructive", title: "Failed to send message" });
-    }
+    const sentMessage = addMessage(selectedConversation.id, user.uid, receiverId, newMessage);
+    setMessages([...messages, sentMessage]);
+    setNewMessage("");
   };
 
    const handleSelectConversation = (convo: Conversation) => {
@@ -127,15 +107,15 @@ export default function MessagesPage() {
                             onClick={() => handleSelectConversation(convo)}
                         >
                             <Avatar>
-                                <AvatarImage src={participant.avatarUrl} />
-                                <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={participant.photoURL} />
+                                <AvatarFallback>{participant.displayName.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 overflow-hidden">
-                                <p className="font-semibold truncate">{participant.name}</p>
+                                <p className="font-semibold truncate">{participant.displayName}</p>
                                 <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
                             </div>
                             <div className="text-xs text-muted-foreground text-right">
-                                <p>{convo.timestamp ? new Date(convo.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</p>
+                                <p>{new Date(convo.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                         </div>
                     )
@@ -150,10 +130,10 @@ export default function MessagesPage() {
                     <div className="flex items-center justify-between p-4 border-b">
                         <div className="flex items-center gap-3">
                             <Avatar>
-                                <AvatarImage src={getParticipant(selectedConversation)?.avatarUrl} />
-                                <AvatarFallback>{getParticipant(selectedConversation)?.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={getParticipant(selectedConversation)?.photoURL} />
+                                <AvatarFallback>{getParticipant(selectedConversation)?.displayName.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <h2 className="text-lg font-semibold">{getParticipant(selectedConversation)?.name}</h2>
+                            <h2 className="text-lg font-semibold">{getParticipant(selectedConversation)?.displayName}</h2>
                         </div>
                         <Button variant="ghost" size="icon">
                             <MoreVertical className="h-5 w-5" />
@@ -165,7 +145,7 @@ export default function MessagesPage() {
                                 <div key={msg.id} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${msg.senderId === user.uid ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                         <p>{msg.text}</p>
-                                        <p className="text-xs text-right mt-1 opacity-70">{msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sending...'}</p>
+                                        <p className="text-xs text-right mt-1 opacity-70">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                                     </div>
                                 </div>
                             ))}

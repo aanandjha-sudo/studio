@@ -13,10 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Logo from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/components/auth-provider";
-import { createUserProfile } from "@/lib/firestore";
+import { createUserProfile } from "@/lib/mock-data";
 
 const formSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
@@ -27,7 +25,7 @@ const formSchema = z.object({
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, login, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,43 +42,25 @@ export default function SignupPage() {
     }
   }, [user, loading, router]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const newUser = userCredential.user;
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    const newUser = createUserProfile({
+      username: values.username,
+      email: values.email,
+      displayName: values.username,
+    });
 
-      // Update the user's profile with their chosen username
-      await updateProfile(newUser, {
-        displayName: values.username,
-      });
+    login({
+        uid: newUser.id,
+        email: newUser.email,
+        displayName: newUser.displayName,
+        photoURL: newUser.photoURL,
+    });
 
-      // Create the user profile in Firestore
-      await createUserProfile(newUser.uid, {
-        username: values.username,
-        email: newUser.email!, // Use the email from the authenticated user
-        displayName: values.username,
-        photoURL: "",
-        bio: "",
-      });
-
-      toast({
-        title: "Account Created!",
-        description: "Welcome to BRO'S SHARE. You are now logged in.",
-      });
-      router.push("/");
-    } catch (error: any) {
-      let errorMessage = "An unexpected error occurred. Please try again.";
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This email is already registered. Please try logging in.";
-      } else {
-          errorMessage = `Signup failed: ${error.message}`;
-      }
-      toast({
-        variant: "destructive",
-        title: "Signup Failed",
-        description: errorMessage,
-      });
-    }
+    toast({
+      title: "Account Created!",
+      description: "Welcome to Vivid Stream. You are now logged in.",
+    });
+    router.push("/");
   };
   
   if (loading || user) {
@@ -99,7 +79,7 @@ export default function SignupPage() {
             <Logo />
           </div>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join BRO'S SHARE today!</CardDescription>
+          <CardDescription>Join Vivid Stream today!</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

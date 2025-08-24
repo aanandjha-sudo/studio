@@ -24,47 +24,36 @@ import Logo from "./logo";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./auth-provider";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 
 interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   authRequired: boolean;
-  alwaysVisible: boolean;
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Feed", icon: Home, authRequired: false, alwaysVisible: true },
-  { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true, alwaysVisible: true },
-  { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true, alwaysVisible: true },
-  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true, alwaysVisible: true },
-  { href: "/settings", label: "Settings", icon: Settings, authRequired: true, alwaysVisible: false },
-  { href: "/developer", label: "Developer", icon: Shield, authRequired: true, alwaysVisible: false },
+  { href: "/", label: "Feed", icon: Home, authRequired: false },
+  { href: "/messages", label: "Messages", icon: MessageSquare, authRequired: true },
+  { href: "/profile", label: "Profile", icon: UserCircle, authRequired: true },
+  { href: "/live", label: "Go Live", icon: Clapperboard, authRequired: true },
+  { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
+  { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
 ];
 
 const SidebarContent = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out.",
-      });
-      router.push("/login");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Logout Failed",
-        description: "There was an error logging out.",
-      });
-    }
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    router.push("/login");
   };
 
   const getInitials = (name?: string | null) => {
@@ -78,13 +67,8 @@ const SidebarContent = () => {
   
   const getUsername = (displayName?: string | null) => {
     if (!displayName) return "@vividuser";
-    return `@${displayName}`;
+    return `@${displayName.toLowerCase()}`;
   }
-
-  const visibleNavItems = navItems.filter(item => {
-    if (item.alwaysVisible) return true;
-    return user; // Only show if user is logged in for non-alwaysVisible items
-  });
 
   return (
     <div className="flex flex-col h-full text-foreground bg-card">
@@ -94,21 +78,24 @@ const SidebarContent = () => {
         </Link>
       </div>
       <nav className="flex-1 p-2 space-y-2">
-        {visibleNavItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
-              pathname === item.href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          if (item.authRequired && !user) return null;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
+                pathname === item.href
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
       <div className="mt-auto p-4 border-t">
         {user ? (
@@ -134,9 +121,6 @@ const SidebarContent = () => {
                 </Link>
             </Button>
         )}
-      </div>
-      <div className="px-4 pb-2 text-center text-xs text-muted-foreground">
-        <p>Created by ajleader</p>
       </div>
     </div>
   );

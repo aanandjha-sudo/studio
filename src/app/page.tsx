@@ -6,9 +6,8 @@ import AppLayout from "@/components/app-layout";
 import PostCard from "@/components/post-card";
 import CreatePost from "@/components/create-post";
 import type { Post } from "@/lib/types";
-import { getPosts, addPost } from "@/lib/firestore";
+import { getPosts, addPost } from "@/lib/mock-data";
 import { useAuth } from "@/components/auth-provider";
-import { serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -21,23 +20,10 @@ export default function FeedPage() {
 
   useEffect(() => {
     setLoading(true);
-    const unsubscribe = getPosts(
-      (newPosts) => {
-        setPosts(newPosts);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching posts:", error);
-        toast({
-          variant: "destructive",
-          title: "Could not fetch posts",
-          description: "There was an error loading the feed. Please try again later."
-        })
-        setLoading(false);
-      }
-    );
-    return () => unsubscribe();
-  }, [toast]);
+    const newPosts = getPosts();
+    setPosts(newPosts);
+    setLoading(false);
+  }, []);
 
   const handleCreatePost = async (content: string) => {
     if (!user) {
@@ -50,7 +36,7 @@ export default function FeedPage() {
         return;
     }
 
-    const newPost: Omit<Post, 'id' | 'timestamp'> = {
+    const newPostData = {
         author: {
             name: user.displayName || "Anonymous",
             avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
@@ -58,25 +44,10 @@ export default function FeedPage() {
         },
         userId: user.uid,
         content: content,
-        type: "text",
-        likes: 0,
-        comments: 0,
-        shares: 0,
     };
     
-    try {
-        await addPost({
-            ...newPost,
-            timestamp: serverTimestamp(),
-        });
-    } catch (error) {
-        console.error("Error creating post:", error);
-        toast({
-            variant: "destructive",
-            title: "Failed to create post",
-            description: "There was an error creating your post. Please try again."
-        });
-    }
+    const newPost = addPost(newPostData);
+    setPosts([newPost, ...posts]);
   };
 
   return (

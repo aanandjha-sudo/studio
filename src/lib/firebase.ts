@@ -1,22 +1,3 @@
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
-// Your web app's Firebase configuration using environment variables
-const firebaseConfig = {
-  apiKey: "AIzaSyDOTz4ON4uXkeV8bvRBoBW8hHTKkxTfnXw",
-  authDomain: "vivid-stream-cl1iu.firebaseapp.com",
-  projectId: "vivid-stream-cl1iu",
-  storageBucket: "vivid-stream-cl1iu.appspot.com",
-  messagingSenderId: "29506674119",
-  appId: "1:29506674119:web:5be334249d55d914eb4de2",
-};
-
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-export { app, auth, db };
+// This file is intentionally left blank after removing Firebase.
+// You can delete this file if you no longer need it.

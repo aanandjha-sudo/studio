@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Grid3x3, Clapperboard, Bookmark, UserX, UserCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { followUser, unfollowUser, getUserProfile } from "@/lib/firestore";
+import { followUser, unfollowUser, getUserProfile } from "@/lib/mock-data";
 import React, { useEffect, useState, useCallback } from "react";
 import type { UserProfile } from "@/lib/types";
 
@@ -31,8 +31,8 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
 
-  const fetchProfile = useCallback(async (uid: string) => {
-    const userProfile = await getUserProfile(uid);
+  const fetchProfile = useCallback((uid: string) => {
+    const userProfile = getUserProfile(uid);
     setProfile(userProfile);
     if (user && userProfile?.followers) {
       setIsFollowing(userProfile.followers.includes(user.uid));
@@ -68,22 +68,16 @@ export default function ProfilePage() {
     });
   });
 
-  const handleFollowToggle = () => handleAuthAction(async () => {
+  const handleFollowToggle = () => handleAuthAction(() => {
     if (!user || !profile) return;
-    try {
-      if (isFollowing) {
-        await unfollowUser(user.uid, profile.id);
-        toast({ title: `Unfollowed @${profile.username}` });
-      } else {
-        await followUser(user.uid, profile.id);
-        toast({ title: `Followed @${profile.username}` });
-      }
-      // Re-fetch profile to update counts
-      fetchProfile(profile.id);
-    } catch (error) {
-      console.error("Follow/unfollow error:", error);
-      toast({ variant: "destructive", title: "Something went wrong" });
+    if (isFollowing) {
+      unfollowUser(user.uid, profile.id);
+      toast({ title: `Unfollowed @${profile.username}` });
+    } else {
+      followUser(user.uid, profile.id);
+      toast({ title: `Followed @${profile.username}` });
     }
+    fetchProfile(profile.id);
   });
 
   if (loading) {

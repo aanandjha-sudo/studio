@@ -1,6 +1,4 @@
 
-import type { Timestamp, FieldValue } from "firebase/firestore";
-
 export interface Post {
     id: string;
     author: {
@@ -16,14 +14,14 @@ export interface Post {
     likes: number;
     comments: number;
     shares: number;
-    timestamp: Timestamp | FieldValue;
+    timestamp: number; // Using number for mock data simplicity
   }
 
 export interface Message {
     id: string;
     senderId: string;
     text: string;
-    timestamp: Timestamp;
+    timestamp: number; // Using number for mock data simplicity
 }
 
 export interface UserProfile {
@@ -46,7 +44,7 @@ export interface Conversation {
     participantIds: string[];
     participants: Pick<UserProfile, 'id' | 'displayName' | 'photoURL'>[];
     lastMessage: string;
-    timestamp: Timestamp;
+    timestamp: number; // Using number for mock data simplicity
 }
 
 

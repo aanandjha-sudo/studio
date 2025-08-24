@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,7 +20,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "BRO'S SHARE",
+  title: "Vivid Stream",
   description: "A dynamic social media platform for sharing and engaging with content.",
 };
 
