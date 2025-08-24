@@ -14,6 +14,7 @@ import {
   LogOut,
   LogIn,
   Settings,
+  Gift,
 } from "lucide-react";
 import React from "react";
 
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { href: "/live", label: "Live", icon: Clapperboard, authRequired: false },
   { href: "/settings", label: "Settings", icon: Settings, authRequired: true },
   { href: "/developer", label: "Developer", icon: Shield, authRequired: true },
+  { href: "/donate", label: "Donate", icon: Gift, authRequired: false },
 ];
 
 const SidebarContent = () => {
