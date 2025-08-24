@@ -55,7 +55,7 @@ export default function SignupPage() {
     }
   };
 
-  if (loading) {
+  if (loading || user) {
     return (
         <div className="flex items-center justify-center min-h-screen">
             <p>Loading...</p>
@@ -63,10 +63,6 @@ export default function SignupPage() {
     );
   }
   
-  if (user) {
-    return null; // Don't render anything while redirecting
-  }
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-sm">

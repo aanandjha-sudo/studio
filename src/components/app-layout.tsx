@@ -78,7 +78,7 @@ const SidebarContent = () => {
     return `@${email.split('@')[0]}`;
   }
   
-  const visibleNavItems = navItems.filter(item => !item.authRequired || user);
+  const visibleNavItems = navItems.filter(item => !item.authRequired || !!user);
 
   return (
     <div className="flex flex-col h-full text-foreground bg-card">
@@ -143,6 +143,11 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // We don't want to run this check on the server, only on the client.
+    if (typeof window === 'undefined') {
+        return;
+    }
+    
     if (loading) return;
 
     const protectedRoutes = navItems
@@ -152,7 +157,7 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
     const isProtectedRoute = protectedRoutes.includes(pathname);
 
     if (!user && isProtectedRoute) {
-      router.push("/login");
+      router.replace("/login");
     } else {
       setIsChecking(false);
     }
