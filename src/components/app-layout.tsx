@@ -73,11 +73,14 @@ const SidebarContent = () => {
             </div>
         </div>
       </div>
+      <div className="px-4 pb-2 text-center text-xs text-muted-foreground">
+        <p>Created by ajleader</p>
+      </div>
     </div>
   );
 };
 
-export default function AppLayout({ children }: { children: React.Node }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">

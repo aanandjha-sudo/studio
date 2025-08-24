@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ShieldCheck, LogIn, Ban, Trash2 } from "lucide-react";
 
-const DEV_ID = "DEV-VIVID-2024";
+const DEV_ID = "Akj@@//8051964008";
 
 export default function DeveloperPage() {
   const [devIdInput, setDevIdInput] = useState("");
