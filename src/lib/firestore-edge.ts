@@ -60,21 +60,36 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
     await updateDoc(userDocRef, data);
 };
 
+export const searchUsers = async (usernameQuery: string): Promise<UserProfile[]> => {
+    const usersRef = collection(db, 'users');
+    const q = query(
+        usersRef,
+        where('username', '>=', usernameQuery.toLowerCase()),
+        where('username', '<=', usernameQuery.toLowerCase() + '\uf8ff')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as UserProfile);
+};
+
 // --- FOLLOW FUNCTIONS ---
 export const followUser = async (currentUserId: string, targetUserId: string) => {
     const currentUserDocRef = doc(db, 'users', currentUserId);
     const targetUserDocRef = doc(db, 'users', targetUserId);
     
-    await updateDoc(currentUserDocRef, { following: arrayUnion(targetUserId) });
-    await updateDoc(targetUserDocRef, { followers: arrayUnion(currentUserId) });
+    const batch = writeBatch(db);
+    batch.update(currentUserDocRef, { following: arrayUnion(targetUserId) });
+    batch.update(targetUserDocRef, { followers: arrayUnion(currentUserId) });
+    await batch.commit();
 };
 
 export const unfollowUser = async (currentUserId: string, targetUserId:string) => {
     const currentUserDocRef = doc(db, 'users', currentUserId);
     const targetUserDocRef = doc(db, 'users', targetUserId);
 
-    await updateDoc(currentUserDocRef, { following: arrayRemove(targetUserId) });
-    await updateDoc(targetUserDocRef, { followers: arrayRemove(currentUserId) });
+    const batch = writeBatch(db);
+    batch.update(currentUserDocRef, { following: arrayRemove(targetUserId) });
+    batch.update(targetUserDocRef, { followers: arrayRemove(currentUserId) });
+    await batch.commit();
 };
 
 // --- POST FUNCTIONS ---

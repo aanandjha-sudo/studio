@@ -8,9 +8,10 @@ import AppLayout from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Grid3x3, Clapperboard, Bookmark, UserCircle, Settings } from "lucide-react";
+import { Grid3x3, Clapperboard, Bookmark, UserX, UserCircle, Settings } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/auth-provider";
-import { getUserProfile } from "@/lib/firestore-edge";
+import { followUser, unfollowUser, getUserProfile } from "@/lib/firestore-edge";
 import React, { useEffect, useState, useCallback } from "react";
 import type { UserProfile } from "@/lib/types";
 
@@ -23,52 +24,73 @@ const userPosts = [
   { id: 6, type: 'video', url: 'https://placehold.co/400x400.png', aiHint: 'ocean waves' },
 ];
 
-export default function ProfilePage() {
+export default function UserProfilePage({ params }: { params: { userId: string } }) {
   const router = useRouter();
+  const { toast } = useToast();
   const { user, loading } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  
+  const [isFollowing, setIsFollowing] = useState(false);
+
   const fetchProfile = useCallback(async (uid: string) => {
     const userProfile = await getUserProfile(uid);
     setProfile(userProfile);
-  }, []);
+    if (user && userProfile?.followers) {
+      setIsFollowing(userProfile.followers.includes(user.uid));
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (user) {
-      fetchProfile(user.uid);
+    fetchProfile(params.userId);
+  }, [params.userId, fetchProfile]);
+
+  const handleAuthAction = (callback: () => void) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Please log in",
+        description: "You need to be logged in to perform this action.",
+        action: <Button onClick={() => router.push('/login')}>Login</Button>
+      });
+    } else {
+      callback();
     }
-  }, [user, fetchProfile]);
+  };
+  
+  const handleMessage = () => handleAuthAction(() => router.push('/messages'));
 
+  const handleBlock = () => handleAuthAction(() => {
+    toast({
+        variant: "destructive",
+        title: "User Blocked",
+        description: `@${profile?.username} has been blocked.`,
+    });
+  });
 
-  if (loading) {
+  const handleFollowToggle = () => handleAuthAction(async () => {
+    if (!user || !profile) return;
+    if (isFollowing) {
+      await unfollowUser(user.uid, profile.id);
+      toast({ title: `Unfollowed @${profile.username}` });
+    } else {
+      await followUser(user.uid, profile.id);
+      toast({ title: `Followed @${profile.username}` });
+    }
+    await fetchProfile(profile.id);
+  });
+
+  if (loading || !profile) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full">
-          <p>Loading...</p>
+          <p>Loading profile...</p>
         </div>
       </AppLayout>
     );
   }
 
-  if (!user || !profile) {
-    return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center h-full text-center p-4">
-            <UserCircle className="w-16 h-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Login to see your profile</h2>
-            <p className="text-muted-foreground mb-4">
-                Your personal profile, posts, and saved items will be here.
-            </p>
-            <Button asChild>
-                <Link href="/login">Login / Sign Up</Link>
-            </Button>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  const canSeeFollowers = !profile.privacySettings?.hideFollowers || profile.id === user.uid;
-  const canSeeFollowing = !profile.privacySettings?.hideFollowing || profile.id === user.uid;
+  const isOwnProfile = user?.uid === profile.id;
+  const canSeeFollowers = !profile.privacySettings?.hideFollowers || isOwnProfile;
+  const canSeeFollowing = !profile.privacySettings?.hideFollowing || isOwnProfile;
 
   return (
     <AppLayout>
@@ -83,7 +105,7 @@ export default function ProfilePage() {
               <div className="text-center md:text-left">
                 <div className="flex items-center justify-center md:justify-start gap-4">
                   <h1 className="text-3xl font-bold">{profile.displayName || "BRO'S SHARE User"}</h1>
-                   {profile.id === user.uid && (
+                   {isOwnProfile && (
                      <Button variant="ghost" size="icon" asChild>
                        <Link href="/settings">
                          <Settings />
@@ -110,8 +132,16 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2 justify-center md:justify-start">
-                  {profile.id === user.uid && (
-                    <Button variant="outline" onClick={() => router.push('/profile/edit')}>Edit Profile</Button>
+                  {!isOwnProfile && (
+                    <>
+                      <Button className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleFollowToggle}>
+                        {isFollowing ? 'Unfollow' : 'Follow'}
+                      </Button>
+                      <Button variant="outline" onClick={handleMessage}>Message</Button>
+                      <Button variant="outline" size="icon" onClick={handleBlock} aria-label="Block user">
+                        <UserX className="h-5 w-5 text-destructive" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -142,7 +172,7 @@ export default function ProfilePage() {
                 <p>No videos yet.</p>
               </TabsContent>
               <TabsContent value="saved" className="text-center p-8">
-                <p>No saved posts.</p>
+                 {isOwnProfile ? <p>No saved posts.</p> : <p>Saved posts are private.</p>}
               </TabsContent>
             </Tabs>
           </div>

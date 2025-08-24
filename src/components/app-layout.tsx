@@ -15,8 +15,9 @@ import {
   LogIn,
   Settings,
   Gift,
+  Search,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import Logo from "./logo";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./auth-provider";
+import { Input } from "./ui/input";
 
 interface NavItem {
   href: string;
@@ -48,6 +50,7 @@ const SidebarContent = () => {
   const router = useRouter();
   const { toast } = useToast();
   const { user, logout } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLogout = async () => {
     try {
@@ -63,6 +66,13 @@ const SidebarContent = () => {
             title: "Logout Failed",
             description: "Could not log you out. Please try again."
         })
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -87,7 +97,20 @@ const SidebarContent = () => {
           <Logo />
         </Link>
       </div>
-      <nav className="flex-1 p-2 space-y-2">
+       <div className="p-2 border-b">
+         <form onSubmit={handleSearch}>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+              placeholder="Search users..." 
+              className="pl-10" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+         </form>
+       </div>
+      <nav className="flex-1 p-2 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           if (item.authRequired && !user) return null;
           // Hide developer tools for non-dev users
@@ -140,6 +163,9 @@ const SidebarContent = () => {
 };
 
 const AppContent = React.memo(function AppContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isSearchPage = pathname === '/search';
+
   return (
     <div className="grid h-screen w-full md:grid-cols-[240px_1fr]">
       <aside className="hidden border-r md:block">
